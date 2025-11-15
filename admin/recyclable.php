@@ -43,7 +43,7 @@
                     </div>
 
                     <div class="card-body">
-                        <table id="recycleTable" class="table table-bordered table-striped">
+                        <table id="recycleTable" class="table table-bordered table-hover">
                             <thead>
                                 <tr>
                                     <th>ID</th>
@@ -52,18 +52,7 @@
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <!-- Sample data (Replace with database) -->
-                                <tr>
-                                    <td>1</td>
-                                    <td>Plastic</td>
-                                    <td>1.20</td>
-                                    <td>
-                                        <button class="btn btn-primary btn-sm"><i class="fas fa-edit"></i></button>
-                                        <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                            </tbody>
+
                         </table>
                     </div>
 
@@ -86,19 +75,42 @@
             <div class="modal-body">
 
                 <label>Material Name</label>
-                <input type="text" class="form-control mb-2" placeholder="e.g. Plastic" required>
+                <input id="addMaterial" type="text" class="form-control mb-2" placeholder="e.g. Plastic" required>
 
                 <label>Rate per KG (RM)</label>
-                <input type="number" step="0.01" class="form-control" placeholder="0.00" required>
+                <input id="addRate" type="number" step="0.01" class="form-control" placeholder="0.00" required>
 
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button class="btn btn-success">Save</button>
+                <button id="addItemBtn" class="btn btn-success">Save</button>
             </div>
         </form>
     </div>
 </div>
+
+<div class="modal fade" id="editModal">
+    <div class="modal-dialog">
+        <form class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Recyclable Item</h5>
+            </div>
+            <div class="modal-body">
+                <label>Material Name</label>
+                <input id="editMaterial" type="text" class="form-control mb-2" required>
+
+                <label>Rate per KG (RM)</label>
+                <input id="editRate" type="number" step="0.01" class="form-control" required>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button id="saveEditBtn" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 
 <!-- Scripts -->
 <script src="../app/plugins/jquery/jquery.min.js"></script>
@@ -110,6 +122,80 @@
 <script>
     $("#recycleTable").DataTable();
 </script>
+
+<script>
+    let recycleTable = $("#recycleTable").DataTable();
+
+    // ADD ITEM
+    $("#addItemBtn").on("click", function() {
+        let material = $("#addMaterial").val();
+        let rate = $("#addRate").val();
+
+        if(material && rate){
+            recycleTable.row.add([
+                recycleTable.rows().count() + 1,
+                material,
+                parseFloat(rate).toFixed(2),
+                `
+                <button class="btn btn-primary btn-sm edit-btn"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-danger btn-sm delete-btn"><i class="fas fa-trash"></i></button>
+                `
+            ]).draw(false);
+
+            $("#addModal").modal("hide");
+            $("#addMaterial").val("");
+            $("#addRate").val("");
+        }
+    });
+</script>
+
+<script>
+    let selectedRow;
+
+    // OPEN EDIT MODAL
+    $("#recycleTable tbody").on("click", ".edit-btn", function() {
+        selectedRow = recycleTable.row($(this).parents("tr"));
+        let data = selectedRow.data();
+
+        $("#editMaterial").val(data[1]);
+        $("#editRate").val(data[2]);
+
+        $("#editModal").modal("show");
+    });
+
+    // SAVE EDIT
+    $("#saveEditBtn").on("click", function(e) {
+        e.preventDefault();
+
+        let newMaterial = $("#editMaterial").val();
+        let newRate = $("#editRate").val();
+
+        selectedRow.data([
+            selectedRow.data()[0], // ID stays same
+            newMaterial,
+            parseFloat(newRate).toFixed(2),
+            `
+            <button class="btn btn-primary btn-sm edit-btn"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-danger btn-sm delete-btn"><i class="fas fa-trash"></i></button>
+            `
+        ]).draw(false);
+
+        $("#editModal").modal("hide");
+    });
+</script>
+
+<script>
+    // DELETE / ARCHIVE
+    $("#recycleTable tbody").on("click", ".delete-btn", function() {
+        let row = recycleTable.row($(this).parents("tr"));
+
+        if(confirm("Archive this item?")){
+            row.remove().draw(false);
+        }
+    });
+</script>
+
+
 
 </body>
 </html>
