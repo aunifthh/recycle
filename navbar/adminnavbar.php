@@ -20,7 +20,7 @@
                 <i class="fas fa-user"></i>&nbsp; Admin
             </a>
             <div class="dropdown-menu dropdown-menu-right">
-                <a href="../logout.php" class="dropdown-item text-danger">
+                <a href="#" id="logoutBtn" class="dropdown-item text-danger">
                     <i class="fas fa-sign-out-alt mr-2"></i> Logout
                 </a>
             </div>
@@ -28,3 +28,26 @@
     </ul>
 </nav>
 <!-- /.navbar -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.getElementById("logoutBtn").addEventListener("click", function (e) {
+        e.preventDefault(); 
+
+        Swal.fire({
+            title: "Log Out?",
+            text: "Are you sure you want to end your session?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#6c757d",
+            confirmButtonText: "Yes, Logout",
+            cancelButtonText: "Cancel"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Redirect to index page
+                window.location.href = "../index.php";
+            }
+        });
+    });
+</script>
+
