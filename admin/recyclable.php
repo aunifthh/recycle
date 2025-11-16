@@ -35,12 +35,12 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Manage Recyclable Types</h3>
-
-                        <button class="btn btn-success float-right" data-toggle="modal" data-target="#addModal">
+                        <h3 class="card-title d-flex align-items-center">Manage Recyclable Types</h3>
+                            <button class="btn btn-success float-right" data-toggle="modal" data-target="#addModal">
                             <i class="fas fa-plus"></i> Add Item
                         </button>
                     </div>
+
 
                     <div class="card-body">
                         <table id="recycleTable" class="table table-bordered table-hover">

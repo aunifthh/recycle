@@ -107,9 +107,9 @@
                                 <i class="bi bi-recycle recycle-icon"></i>
                                 <p class="text-center text-muted mb-3">Login to continue</p>
 
-                                <form>
+                                <form onsubmit="userLogin(event)">
                                     <div class="input-group mb-3">
-                                        <input type="email" class="form-control" placeholder="Email" required>
+                                        <input type="email" class="form-control" id="userEmail" placeholder="Email" required>
                                         <div class="input-group-text">
                                             <i class="bi bi-envelope"></i>
                                         </div>
@@ -147,9 +147,9 @@
                                 <i class="bi bi-shield-lock shield-icon"></i>
                                 <p class="text-center text-muted mb-3">Administrator Access</p>
 
-                                <form>
+                                <form onsubmit="adminLogin(event)">
                                     <div class="input-group mb-3">
-                                        <input type="text" class="form-control" placeholder="Admin Username" required>
+                                        <input type="text" class="form-control" id="adminUser" placeholder="Admin Username" required>
                                         <div class="input-group-text">
                                             <i class="bi bi-person-lock"></i>
                                         </div>
@@ -183,6 +183,34 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        // USER LOGIN
+        function userLogin(event) {
+            event.preventDefault();
+
+            let email = document.getElementById("userEmail").value;
+            let pass = document.getElementById("userPass").value;
+
+            if (email === "user@gmail.com" && pass === "user123") {
+                window.location.href = "recycle/user/dashboard.php";
+            } else {
+                alert("Incorrect user email or password.");
+            }
+        }
+
+        // ADMIN LOGIN
+        function adminLogin(event) {
+            event.preventDefault();
+
+            let username = document.getElementById("adminUser").value;
+            let pass = document.getElementById("adminPass").value;
+
+            if (username === "admin" && pass === "admin123") {
+                window.location.href = "recycle/admin/recyclable.php";
+            } else {
+                alert("Incorrect admin username or password.");
+            }
+        }
+
         // Toggle password (User)
         document.getElementById("toggleUserPass").onclick = function () {
             const pw = document.getElementById("userPass");
