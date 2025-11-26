@@ -1,12 +1,12 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css">
+
 <!-- Main Sidebar Container -->
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
-    <a href="../admin/dashboard.php" class="brand-link">
-        <img src="../app/dist/img/AdminLTELogo.png"
-             alt="Logo"
-             class="brand-image img-circle elevation-3">
-        <span class="brand-text font-weight-light">Recycling Admin</span>
-    </a>
+    <a href="../admin/dashboard.php" class="brand-link d-flex align-items-center">
+    <i class="bi bi-recycle recycle-icon" style="font-size: 1.5rem;"></i>
+    <span class="brand-text font-weight-light" style="margin-left: 6px;"> Recycling Admin</span>
+</a>
 
     <!-- Sidebar -->
     <div class="sidebar">

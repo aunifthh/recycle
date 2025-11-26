@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Community Recycling Collection System - Login</title>
-    <link rel="icon" href="#">
+    <link rel="icon" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/icons/recycle.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Icons + Bootstrap -->
@@ -191,7 +191,7 @@
             let pass = document.getElementById("userPass").value;
 
             if (email === "user@gmail.com" && pass === "user123") {
-                window.location.href = "recycle/user/dashboard.php";
+                window.location.href = "user/dashboard.php";
             } else {
                 alert("Incorrect user email or password.");
             }

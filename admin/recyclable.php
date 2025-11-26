@@ -1,6 +1,5 @@
 <?php
 // session_start();
-// include('../auth/check_admin.php'); // Optional
 ?>
 
 <!DOCTYPE html>
@@ -8,6 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Recyclable Items</title>
+    <link rel="icon" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/icons/recycle.svg">
 
     <!-- AdminLTE -->
     <link rel="stylesheet" href="../app/plugins/fontawesome-free/css/all.min.css">
@@ -35,12 +35,17 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title d-flex align-items-center">Manage Recyclable Types</h3>
-                            <button class="btn btn-success float-right" data-toggle="modal" data-target="#addModal">
-                            <i class="fas fa-plus"></i> Add Item
-                        </button>
+                        <div class="d-flex justify-content-between align-items-center w-100">
+                            <div>
+                                <h3 class="card-title mb-0">Manage Recyclable Types</h3>
+                            </div>
+                            <div>
+                                <button class="btn btn-success" data-toggle="modal" data-target="#addModal">
+                                    <i class="fas fa-plus"></i> Add Item
+                                </button>
+                            </div>
+                        </div>
                     </div>
-
 
                     <div class="card-body">
                         <table id="recycleTable" class="table table-bordered table-hover">
