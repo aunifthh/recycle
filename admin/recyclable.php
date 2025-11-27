@@ -8,7 +8,7 @@ $currentPage = 'recyclable';
 <head>
     <meta charset="UTF-8">
     <title>Recyclable Items</title>
-    <link rel="icon" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/icons/recycle.svg">
+    <link rel="icon" type="image/png" href="../images/truck.png">
 
     <!-- AdminLTE -->
     <link rel="stylesheet" href="../app/plugins/fontawesome-free/css/all.min.css">

@@ -3,13 +3,23 @@
 <!-- Main Sidebar Container -->
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
-    <a href="../admin/dashboard.php" class="brand-link align-items-center">
-    <i class="bi bi-recycle recycle-icon" style="font-size: 1.5rem;"></i>
-    <span class="brand-text font-weight-light" style="margin-left: 6px;"> Recycling Admin</span>
-</a>
+    <a href="dashboard.php" class="brand-link">
+        <img
+            src="../images/truck.png"
+            alt="Recycle Logo"
+            class="brand-image"
+        />
+        <span class="brand-text font-weight-light">Recycle</span>
+    </a>
+
 
     <!-- Sidebar -->
     <div class="sidebar">
+        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+            <div class="info">
+                <a class="d-block"><i class="bi bi-shield-lock shield-icon" style="margin-right:3px;"></i>Admin</a>
+            </div>
+        </div>
 
         <!-- Sidebar Menu -->
         <nav class="mt-2">

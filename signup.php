@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Sign Up - Community Recycling Collection System</title>
-    <link rel="icon" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/icons/recycle.svg">
+    <link rel="icon" type="image/png" href="images/truck.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Icons + Bootstrap -->
