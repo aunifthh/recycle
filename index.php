@@ -205,7 +205,7 @@
             let pass = document.getElementById("adminPass").value;
 
             if (username === "admin" && pass === "admin123") {
-                window.location.href = "recycle/admin/recyclable.php";
+                windows.location.href = "admin/dashboard.php";
             } else {
                 alert("Incorrect admin username or password.");
             }

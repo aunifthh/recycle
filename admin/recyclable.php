@@ -1,5 +1,6 @@
 <?php
 // session_start();
+$currentPage = 'recyclable';
 ?>
 
 <!DOCTYPE html>
