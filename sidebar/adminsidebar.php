@@ -40,7 +40,7 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="../admin/pickups.php" class="nav-link <?= ($currentPage == 'pickups' ? 'active' : '') ?>">
+                    <a href="../admin/request.php" class="nav-link <?= ($currentPage == 'request' ? 'active' : '') ?>">
                         <i class="nav-icon fas fa-truck"></i>
                         <p>Pickup Requests</p>
                     </a>
