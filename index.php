@@ -136,7 +136,7 @@
                         <h2 class="accordion-header" id="adminHeading">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                                 data-bs-target="#adminLogin" aria-expanded="false" aria-controls="adminLogin">
-                                Admin Login
+                                Staff Login
                             </button>
                         </h2>
 
@@ -145,11 +145,11 @@
                             <div class="accordion-body">
 
                                 <i class="bi bi-shield-lock shield-icon"></i>
-                                <p class="text-center text-muted mb-3">Administrator Access</p>
+                                <p class="text-center text-muted mb-3">Staff Access</p>
 
                                 <form onsubmit="adminLogin(event)">
                                     <div class="input-group mb-3">
-                                        <input type="text" class="form-control" id="adminUser" placeholder="Admin Username" required>
+                                        <input type="text" class="form-control" id="adminUser" placeholder="Staff Username" required>
                                         <div class="input-group-text">
                                             <i class="bi bi-person-lock"></i>
                                         </div>
@@ -206,6 +206,8 @@
 
             if (username === "admin" && pass === "admin123") {
                 window.location.href = "admin/dashboard.php";
+            } else if (username === "staff" && pass === "staff123") {
+                window.location.href = "staff/dashboard.php";
             } else {
                 alert("Incorrect admin username or password.");
             }

@@ -8,6 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Icons + Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -88,17 +89,17 @@
                 <i class="bi bi-recycle recycle-icon"></i>
                 <p class="text-center text-muted mb-3">Join our recycling community</p>
 
-                <form>
+                <form id="signupForm">
 
                     <div class="input-group mb-3">
-                        <input type="text" class="form-control" placeholder="Full Name" required>
+                        <input type="text" class="form-control" id="name" placeholder="Full Name" required>
                         <div class="input-group-text">
                             <i class="bi bi-person"></i>
                         </div>
                     </div>
 
                     <div class="input-group mb-3">
-                        <input type="email" class="form-control" placeholder="Email" required>
+                        <input type="email" class="form-control" id="email" placeholder="Email" required>
                         <div class="input-group-text">
                             <i class="bi bi-envelope"></i>
                         </div>
@@ -111,17 +112,10 @@
                         </div>
                     </div>
 
-                    <div class="input-group mb-3">
-                        <input type="tel" class="form-control" placeholder="Phone Number" required>
+                    <div class="input-group mb-4">
+                        <input type="tel" class="form-control" id="phone" placeholder="Phone Number" required>
                         <div class="input-group-text">
                             <i class="bi bi-telephone"></i>
-                        </div>
-                    </div>
-
-                    <div class="input-group mb-4">
-                        <input type="text" class="form-control" placeholder="Home Address" required>
-                        <div class="input-group-text">
-                            <i class="bi bi-geo-alt"></i>
                         </div>
                     </div>
 
@@ -140,6 +134,20 @@
     </div>
 
     <script>
+        // SweetAlert for signup form submission
+        document.getElementById("signupForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Account Created!',
+                text: 'Please login to continue.',
+                confirmButtonText: 'OK'
+            }).then(function () {
+                window.location.href = "index.php";
+            });
+        });
+
         // Password toggle
         document.getElementById("togglePassword").onclick = function () {
             const pw = document.getElementById("password");
