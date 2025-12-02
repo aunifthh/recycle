@@ -39,6 +39,13 @@
                     </a>
                 </li>
 
+                <li class="nav-item">
+                    <a href="../user/profile.php" class="nav-link <?= ($currentPage == 'profile' ? 'active' : '') ?>">
+                        <i class="nav-icon fas fa-user-cog"></i>
+                        <p>Profile Management</p>
+                    </a>
+                </li>
+
             </ul>
         </nav>
         <!-- /.sidebar-menu -->
