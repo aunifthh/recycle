@@ -46,12 +46,32 @@
                     </a>
                 </li>
 
-                <li class="nav-item">
-                    <a href="../admin/users.php" class="nav-link <?= ($currentPage == 'users' ? 'active' : '') ?>">
+                <li class="nav-item has-treeview <?= ($currentPage == 'users' ? 'menu-open' : '') ?>">
+                    <a href="#" class="nav-link <?= ($currentPage == 'users' ? 'active' : '') ?>">
                         <i class="nav-icon fas fa-users"></i>
-                        <p>Users</p>
+                        <p>
+                            Users
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
                     </a>
+
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="../admin/staff.php" class="nav-link <?= ($currentSubPage == 'staff' ? 'active' : '') ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Staff</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="../admin/customer.php" class="nav-link <?= ($currentSubPage == 'customer' ? 'active' : '') ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Customer</p>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
+
 
             </ul>
         </nav>
