@@ -20,8 +20,8 @@ $currentPage = 'recyclable';
 <body class="hold-transition sidebar-mini layout-fixed">
 <div class="wrapper">
 
-    <?php include("../navbar/adminnavbar.php"); ?>
-    <?php include("../sidebar/adminsidebar.php"); ?>
+    <?php include("../navbar/staffnavbar.php"); ?>
+    <?php include("../sidebar/staffsidebar.php"); ?>
 
     <!-- Content Wrapper -->
     <div class="content-wrapper">

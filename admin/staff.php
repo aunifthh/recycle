@@ -15,6 +15,10 @@ $currentPage = 'staff';
     <link rel="stylesheet" href="../app/dist/css/adminlte.min.css">
     <link rel="stylesheet" href="../app/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
     <link rel="stylesheet" href="../app/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -52,12 +56,48 @@ $currentPage = 'staff';
                         <table id="userTable" class="table table-bordered table-hover">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th>Staff ID</th>
                                     <th>Name</th>
                                     <th>Email</th>
+                                    <th>Phone</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
+
+                            <tbody>
+                                <!-- Preloaded demo staff -->
+                                <tr>
+                                    <td>STF001</td>
+                                    <td>Fareez Fauzi</td>
+                                    <td>fareez@gmail.com</td>
+                                    <td>012-3456789</td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm edit-btn"><i class="fas fa-edit"></i></button>
+                                        <button class="btn btn-danger btn-sm delete-btn"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>STF002</td>
+                                    <td>Nur Ain Nadhirah</td>
+                                    <td>ainnad@gmail.com</td>
+                                    <td>019-9988776</td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm edit-btn"><i class="fas fa-edit"></i></button>
+                                        <button class="btn btn-danger btn-sm delete-btn"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>STF003</td>
+                                    <td>Arnie Sabila</td>
+                                    <td>arnie@gmail.com</td>
+                                    <td>017-2244668</td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm edit-btn"><i class="fas fa-edit"></i></button>
+                                        <button class="btn btn-danger btn-sm delete-btn"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+
                         </table>
                     </div>
                 </div>
@@ -70,12 +110,13 @@ $currentPage = 'staff';
     <?php include("../footer/adminfooter.php"); ?>
 </div>
 
+
 <!-- ADD USER MODAL -->
 <div class="modal fade" id="addModal">
     <div class="modal-dialog">
         <form class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Add User</h5>
+                <h5 class="modal-title">Add Staff</h5>
             </div>
             <div class="modal-body">
                 <label>Name</label>
@@ -85,7 +126,7 @@ $currentPage = 'staff';
                 <input id="addEmail" type="email" class="form-control mb-2" required>
 
                 <label>Phone Number</label>
-                <input id="phoneNumber" type="text" class="form-control mb-2" required>
+                <input id="addPhone" type="text" class="form-control mb-2" required>
 
             </div>
             <div class="modal-footer">
@@ -101,14 +142,20 @@ $currentPage = 'staff';
     <div class="modal-dialog">
         <form class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit User</h5>
+                <h5 class="modal-title">Edit Staff</h5>
             </div>
             <div class="modal-body">
+
+                <input id="editID" type="text" class="form-control mb-2" readonly>
+
                 <label>Name</label>
                 <input id="editName" type="text" class="form-control mb-2" required>
 
                 <label>Email</label>
                 <input id="editEmail" type="email" class="form-control mb-2" required>
+
+                <label>Phone Number</label>
+                <input id="editPhone" type="text" class="form-control mb-2" required>
 
             </div>
             <div class="modal-footer">
@@ -119,25 +166,8 @@ $currentPage = 'staff';
     </div>
 </div>
 
-<!-- DELETE CONFIRMATION MODAL -->
-<div class="modal fade" id="deleteModal">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Delete User</h5>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this user?</p>
-            </div>
-            <div class="modal-footer">
-                <button id="cancelDelete" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button id="confirmDelete" class="btn btn-danger">Delete</button>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- JS -->
+<!-- SCRIPTS -->
 <script src="../app/plugins/jquery/jquery.min.js"></script>
 <script src="../app/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="../app/plugins/datatables/jquery.dataTables.min.js"></script>
@@ -147,20 +177,30 @@ $currentPage = 'staff';
 
 <script>
 let table = $("#userTable").DataTable();
-let selectedRowForDelete;
+let selectedRow;
 
-// Add User
+// Generate Staff ID
+function generateStaffID(number) {
+    return "STF" + number.toString().padStart(3, "0");
+}
+
+// ADD STAFF
 $("#addUserBtn").on("click", function(e) {
     e.preventDefault();
 
     let name = $("#addName").val();
     let email = $("#addEmail").val();
+    let phone = $("#addPhone").val();
 
-    if(name && email) {
+    if (name && email && phone) {
+
+        let newID = generateStaffID(table.rows().count() + 1);
+
         table.row.add([
-            table.rows().count() + 1,
+            newID,
             name,
             email,
+            phone,
             `
             <button class="btn btn-primary btn-sm edit-btn"><i class="fas fa-edit"></i></button>
             <button class="btn btn-danger btn-sm delete-btn"><i class="fas fa-trash"></i></button>
@@ -170,28 +210,41 @@ $("#addUserBtn").on("click", function(e) {
         $("#addModal").modal("hide");
         $("#addName").val("");
         $("#addEmail").val("");
+        $("#addPhone").val("");
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Staff added!',
+            text: 'New staff has been successfully created.',
+            timer: 1500,
+            showConfirmButton: false
+        });
     }
 });
 
-// Edit User
-let selectedRow;
+
+// EDIT STAFF
 $("#userTable tbody").on("click", ".edit-btn", function() {
     selectedRow = table.row($(this).parents("tr"));
     let data = selectedRow.data();
 
+    $("#editID").val(data[0]);
     $("#editName").val(data[1]);
     $("#editEmail").val(data[2]);
+    $("#editPhone").val(data[3]);
 
     $("#editModal").modal("show");
 });
 
+// SAVE EDIT
 $("#saveEditBtn").on("click", function(e) {
     e.preventDefault();
 
     selectedRow.data([
-        selectedRow.data()[0],
+        $("#editID").val(),
         $("#editName").val(),
         $("#editEmail").val(),
+        $("#editPhone").val(),
         `
         <button class="btn btn-primary btn-sm edit-btn"><i class="fas fa-edit"></i></button>
         <button class="btn btn-danger btn-sm delete-btn"><i class="fas fa-trash"></i></button>
@@ -199,27 +252,46 @@ $("#saveEditBtn").on("click", function(e) {
     ]).draw(false);
 
     $("#editModal").modal("hide");
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Staff updated!',
+        text: 'Changes saved successfully.',
+        timer: 1500,
+        showConfirmButton: false
+    });
 });
 
-// Delete User - show modal
+
+// DELETE STAFF
 $("#userTable tbody").on("click", ".delete-btn", function() {
-    selectedRowForDelete = table.row($(this).parents("tr"));
-    $("#deleteModal").modal("show");
+
+    let row = table.row($(this).parents("tr"));
+
+    Swal.fire({
+        title: "Delete this staff?",
+        text: "This action cannot be undone.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, delete"
+    }).then((result) => {
+        if (result.isConfirmed) {
+
+            row.remove().draw(false);
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Deleted!',
+                text: 'Staff has been removed.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+    });
 });
 
-// Confirm Delete
-$("#confirmDelete").on("click", function() {
-    if(selectedRowForDelete) {
-        selectedRowForDelete.remove().draw(false);
-        selectedRowForDelete = null;
-    }
-    $("#deleteModal").modal("hide");
-});
-
-// Cancel Delete
-$("#cancelDelete").on("click", function() {
-    selectedRowForDelete = null;
-});
 </script>
 
 </body>
