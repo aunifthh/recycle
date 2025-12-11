@@ -13,7 +13,6 @@ $currentPage = 'pickups';
 <link rel="stylesheet" href="../app/dist/css/adminlte.min.css">
 <link rel="stylesheet" href="../app/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
 <link rel="stylesheet" href="../app/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
-</head>
 <style>
 .cancelBtn {
     width: 90px; /* fixed width */
@@ -21,6 +20,7 @@ $currentPage = 'pickups';
     font-size: 0.8rem; /* smaller text */
 }
 </style>
+</head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
 <div class="wrapper">
@@ -31,9 +31,14 @@ $currentPage = 'pickups';
 <section class="content-header">
     <div class="container-fluid d-flex justify-content-between align-items-center">
         <h3 class="mb-2">Pickup Request</h3>
-        <a href="pickup_form.php" class="btn btn-success">
-            <i class="fas fa-plus"></i> Add Request
-        </a>
+        <div class="d-flex gap-2">
+            <a href="pickup_form.php" class="btn btn-success">
+                <i class="fas fa-plus"></i> Add Request
+            </a>
+            <button id="deleteAllBtn" class="btn btn-danger" <?= empty($_SESSION['pickup_requests']) ? 'disabled' : '' ?>>
+                <i class="fas fa-trash"></i> Delete All
+            </button>
+        </div>
     </div>
 </section>
 
@@ -60,7 +65,6 @@ $currentPage = 'pickups';
                 </tr>
             </thead>
             <tbody>
-                
             <?php
             $requests = $_SESSION['pickup_requests'] ?? [];
             foreach ($requests as $index => $req):
@@ -137,6 +141,17 @@ $(document).on("click",".cancelBtn",function(){
         }, 'json');
     }
 });
+
+// DELETE ALL BUTTON
+$('#deleteAllBtn').on('click', function(){
+    if(confirm("Are you sure you want to delete ALL pickup requests? This cannot be undone.")){
+        $.post('pickup_form.php', {action: 'delete_all_requests'}, function(res){
+            if(res.ok) location.reload();
+            else alert('Could not delete requests');
+        }, 'json');
+    }
+});
 </script>
+
 </body>
 </html>

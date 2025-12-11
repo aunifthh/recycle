@@ -21,29 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json; charset=utf-8');
     $action = $_POST['action'];
 
-    if ($action === 'add_address') {
-        $label = trim($_POST['label'] ?? '');
-        $address = trim($_POST['address'] ?? '');
-        $is_default = (isset($_POST['is_default']) && $_POST['is_default'] === '1');
-
-        if ($label === '' || $address === '') {
-            echo json_encode(['ok' => false, 'msg' => 'Label & address required.']);
-            exit;
-        }
-
-        $addrs = &$_SESSION['user_data']['addresses'];
-        $nextId = (count($addrs) > 0) ? (max(array_column($addrs, 'id')) + 1) : 1;
-        if ($is_default) {
-            foreach ($addrs as &$a) $a['is_default'] = false;
-        }
-        $new = ['id' => $nextId, 'label' => $label, 'address' => $address, 'is_default' => $is_default];
-        $addrs[] = $new;
-
-        echo json_encode(['ok' => true, 'address' => $new, 'addresses' => $addrs]);
-        exit;
-    }
-
-    if ($action === 'save_request') {
+    if($action === 'save_request'){
         $payload = [
             'items' => $_POST['items'] ?? [],
             'address_id' => $_POST['address_id'] ?? '',
@@ -64,7 +42,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
-    echo json_encode(['ok' => false, 'msg' => 'Unknown action']);
+    if($action === 'cancel_request'){
+        $index = $_POST['index'] ?? null;
+        if($index !== null && isset($_SESSION['pickup_requests'][$index])){
+            $req = $_SESSION['pickup_requests'][$index];
+            $today = new DateTime();
+            $pickupDate = new DateTime($req['date']);
+            $diffDays = ($pickupDate->getTimestamp() - $today->getTimestamp()) / (60*60*24);
+
+            if($diffDays >= 2){
+                $_SESSION['pickup_requests'][$index]['status'] = 'Cancelled';
+                echo json_encode(['ok'=>true]);
+                exit;
+            } else {
+                echo json_encode(['ok'=>false,'msg'=>'Cannot cancel within 2 days']);
+                exit;
+            }
+        }
+        echo json_encode(['ok'=>false,'msg'=>'Invalid request']);
+        exit;
+    }
+
+    if($action === 'delete_all_requests'){
+        $_SESSION['pickup_requests'] = [];
+        echo json_encode(['ok'=>true]);
+        exit;
+    }
+
+    echo json_encode(['ok'=>false,'msg'=>'Unknown action']);
     exit;
 }
 
@@ -242,11 +247,11 @@ $addresses_json = json_encode($user['addresses']);
     </div>
 </div>
 
-<!-- Confirmation Modal -->
+<!-- Confirm Submission Modal -->
 <div class="modal fade" id="confirmModal">
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header bg-warning text-dark">
+      <div class="modal-header text-white bg-success">
         <h5 class="modal-title">Confirm Submission</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
@@ -255,12 +260,25 @@ $addresses_json = json_encode($user['addresses']);
       </div>
       <div class="modal-footer">
         <button id="confirmNo" class="btn btn-secondary" data-dismiss="modal">No</button>
-        <button id="confirmYes" class="btn btn-warning">Yes</button>
+        <button id="confirmYes" class="btn btn-success">Yes</button>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content border-success">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">Success!</h5>
+      </div>
+      <div class="modal-body">
+        Pickup request submitted successfully!
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="../app/plugins/jquery/jquery.min.js"></script>
 <script src="../app/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -274,7 +292,7 @@ let nextAddrId = Math.max(...savedAddresses.map(a=>a.id),0)+1;
 let editingId = null;
 let items = [];
 
-// ----------------- PICKUP DATE/TIME -----------------
+// --- PICKUP DATE/TIME ---
 let minDate = new Date(); minDate.setDate(minDate.getDate()+2);
 document.getElementById("pickupDate").min = minDate.toISOString().split("T")[0];
 
@@ -283,16 +301,13 @@ function updateAvailableTimes(date){
     const booked = getAllBooked().filter(r=>r.date===date);
     let timeSelect = $("#pickupTime"); timeSelect.html('<option value="" disabled selected>-- Select Time --</option>');
     TIME_SLOTS.forEach(t=>{
-        let disabled = booked.filter(r=>r.time===t).length>=SLOT_CAPACITY?'disabled':'';
+        let disabled = booked.filter(r=>r.time===t).length>=SLOT_CAPACITY?'disabled':''; 
         timeSelect.append(`<option value="${t}" ${disabled}>${t}</option>`);
     });
 }
-$("#pickupDate").on("input", function(){
-    let selected = this.value;
-    updateAvailableTimes(selected);
-});
+$("#pickupDate").on("input", function(){ updateAvailableTimes(this.value); });
 
-// ----------------- ITEMS -----------------
+// --- ITEMS ---
 function updateItemSubtotal(){
     let rate = parseFloat($('#categorySelect option:selected').data('rate')||0);
     let qty = parseFloat($('#itemQty').val()||0);
@@ -314,26 +329,20 @@ $('#addItemBtn').on('click', function(){
     renderItemsTable();
     $('#categorySelect').val(''); $('#itemQty').val(''); $('#itemSubtotal').val('0.00');
 });
-$(document).on('click','.removeItemBtn',function(){
-    items.splice($(this).data('idx'),1); renderItemsTable();
-});
+$(document).on('click','.removeItemBtn',function(){ items.splice($(this).data('idx'),1); renderItemsTable(); });
 
-// ----------------- ADDRESSES -----------------
+// --- ADDRESSES ---
 function renderAddressDropdown(){
     const $sel=$('#pickupAddress'); $sel.empty(); $sel.append('<option value="" disabled selected>-- Select Pickup Address --</option>');
     savedAddresses.forEach(a=>$sel.append(`<option value="${a.id}">${a.label} — ${a.address}</option>`));
     $sel.append('<option value="new">+ Add New Address</option>');
-}
-function showAddressPreview(id){
-    const addr = savedAddresses.find(a=>a.id==id);
-    $('#addressPreview').html(addr?`<strong>${addr.label}</strong><div>${addr.address}</div>`:'');
 }
 $('#pickupAddress').on('change', function(){
     if($(this).val()==='new'){
         editingId=null; $('#modalTitle').text('Add New Address');
         $('#addressLabel').val(''); $('#addressText').val(''); $('#addressDefault').prop('checked',false);
         $('#addressModal').modal('show');
-    } else showAddressPreview($(this).val());
+    }
 });
 $('#saveAddressBtn').on('click', function(){
     const label=$('#addressLabel').val().trim(), address=$('#addressText').val().trim(), isDefault=$('#addressDefault').prop('checked');
@@ -345,29 +354,59 @@ $('#saveAddressBtn').on('click', function(){
     } else {
         let newAddr={id:nextAddrId++, label, address, is_default:isDefault};
         savedAddresses.push(newAddr);
-        // save to session
-        $.post('pickup_form.php',{action:'add_address', label, address, is_default:isDefault?1:0}, function(res){if(res.ok) console.log('Address saved to session');},'json');
     }
     $('#addressModal').modal('hide'); renderAddressDropdown();
-    $('#pickupAddress').val(savedAddresses[savedAddresses.length-1].id); showAddressPreview(savedAddresses[savedAddresses.length-1].id);
+    $('#pickupAddress').val(savedAddresses[savedAddresses.length-1].id);
 });
 
-// ----------------- FORM SUBMIT -----------------
+// --- FORM SUBMIT ---
 $('#pickupForm').on('submit', function(e){
     e.preventDefault();
     if(items.length===0){ alert('Please add at least one item'); return; }
-    let addressId=$('#pickupAddress').val(); if(!addressId||addressId==='new'){ alert('Please select address'); return; }
+    let addressId=$('#pickupAddress').val(); 
+    if(!addressId||addressId==='new'){ alert('Please select address'); return; }
+
     let addrObj=savedAddresses.find(a=>a.id==addressId);
-    let payload={items,address_id:addrObj.id,address_label:addrObj.label,address:addrObj.address,date:$('#pickupDate').val(),time:$('#pickupTime').val(),remarks:$('#remarks').val(),totalPrice:parseFloat($('#totalPrice').text()),status:"Pending"};
-    $.post('pickup_form.php',{action:'save_request', ...payload}, function(res){
+    window.tempPickupPayload = {
+        items,
+        address_id: addrObj.id,
+        address_label: addrObj.label,
+        address: addrObj.address,
+        date: $('#pickupDate').val(),
+        time: $('#pickupTime').val(),
+        remarks: $('#remarks').val(),
+        totalPrice: parseFloat($('#totalPrice').text()),
+        status: "Pending"
+    };
+
+    $('#confirmModal').modal('show');
+});
+
+// --- CONFIRM YES ---
+$('#confirmYes').on('click', function(){
+    const payload = window.tempPickupPayload;
+    if(!payload) return;
+
+    $.post('pickup_form.php', {action:'save_request', ...payload}, function(res){
         if(res.ok){
-            let allRequests=JSON.parse(localStorage.getItem('pickupRequests')||'[]'); allRequests.push(payload);
+            let allRequests = JSON.parse(localStorage.getItem('pickupRequests')||'[]');
+            allRequests.push(payload);
             localStorage.setItem('pickupRequests', JSON.stringify(allRequests));
-            $('#submitModal').modal('show');
-        } else alert('Error: '+(res.msg||'Could not save request'));
+
+            $('#confirmModal').modal('hide');
+
+            // Show Success Modal
+            $('#successModal').modal('show');
+            setTimeout(()=> {
+                $('#successModal').modal('hide');
+                window.location.href='pickups.php';
+            }, 2000);
+
+        } else {
+            alert('Error: '+(res.msg||'Could not save request'));
+        }
     },'json').fail(function(){ alert('AJAX error'); });
 });
-$('#submitOk').on('click', function(){ window.location.href='pickups.php'; });
 
 // INITIAL
 renderAddressDropdown();
