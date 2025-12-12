@@ -1,10 +1,10 @@
 <?php
 session_start();
-// Mock user data (simulated logged-in customer)
+
 if (!isset($_SESSION['user_data'])) {
     $_SESSION['user_data'] = [
-        'name' => 'Ali Rahman',
-        'email' => 'ali@example.com',
+        'name' => 'Ain Nazirah',
+        'email' => 'naz@gmail.com',
         'phone' => '0123456789',
         'password' => '',
         'addresses' => [
@@ -29,6 +29,10 @@ $currentPage = 'profile';
     <link rel="stylesheet" href="../app/plugins/fontawesome-free/css/all.min.css">
     <link rel="stylesheet" href="../app/dist/css/adminlte.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
     <style>
         .address-card {
             border-left: 4px solid #007bff;
@@ -110,7 +114,6 @@ $currentPage = 'profile';
                                     <h3 class="card-title"><i class="fas fa-map-marker-alt mr-1"></i> Saved Addresses</h3>
                                 </div>
                                 <div class="card-body">
-                                    <!-- Highly visible Add Address Button -->
                                     <div class="mb-4">
                                         <button id="openAddAddressBtn" class="btn btn-success btn-lg w-100">
                                             <i class="fas fa-plus-circle mr-2"></i><strong>Add New Pickup Address</strong>
@@ -171,20 +174,30 @@ $currentPage = 'profile';
     <script src="../app/dist/js/adminlte.min.js"></script>
 
     <script>
-        // ======================
         // Profile Management
-        // ======================
         document.getElementById('saveProfileBtn').addEventListener('click', function() {
             const name = document.getElementById('nameInput').value.trim();
             const email = document.getElementById('emailInput').value.trim();
             const phone = document.getElementById('phoneInput').value.trim();
 
             if (!name || !email || !phone) {
-                alert('Please fill in all required fields.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Information',
+                    text: 'Please fill in all required fields.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
                 return;
             }
 
-            alert('Profile updated successfully!');
+            Swal.fire({
+                icon: 'success',
+                title: 'Profile Updated!',
+                text: 'Your profile has been successfully updated.',
+                timer: 1500,
+                showConfirmButton: false
+            });
         });
 
         // Toggle password visibility
@@ -200,9 +213,7 @@ $currentPage = 'profile';
             }
         });
 
-        // ======================
-        // Address Management (Fully Frontend)
-        // ======================
+        // Address Management 
         let addresses = <?php echo json_encode($user['addresses']); ?>;
         let nextId = Math.max(...addresses.map(a => a.id), 0) + 1;
         let editingId = null;
@@ -214,24 +225,26 @@ $currentPage = 'profile';
                 return;
             }
 
-            container.innerHTML = addresses.map(addr => `
+            container.innerHTML = addresses.map(addr => {
+                return `
                 <div class="address-card ${addr.is_default ? 'default' : ''}">
                     <div class="d-flex justify-content-between align-items-start">
                         <div style="flex: 1; min-width: 0;">
-                            <strong>${addr.label}</strong><br>
-                            <small class="text-muted">${addr.address}</small>
+                            <strong>${escapeHtml(addr.label)}</strong><br>
+                            <small class="text-muted">${escapeHtml(addr.address)}</small>
                         </div>
                         <div class="ml-3 text-right" style="white-space: nowrap;">
                             ${addr.is_default ? 
                                 '<span class="badge badge-success">Default</span>' : 
-                                '<button class="btn btn-xs btn-outline-success mb-1" onclick="setAsDefault(' + addr.id + ')">Set Default</button>'
+                                '<button class="btn btn-sm btn-outline-success mb-1" onclick="setAsDefault(' + addr.id + ')">Set Default</button>'
                             }<br>
-                            <button class="btn btn-xs btn-warning mb-1" onclick="editAddress(' + addr.id + ')">Edit</button><br>
-                            <button class="btn btn-xs btn-danger" onclick="deleteAddress(' + addr.id + ')">Delete</button>
+                            <button class="btn btn-sm btn-warning mb-1" onclick="editAddress(${addr.id})">Edit</button><br>
+                            <button class="btn btn-sm btn-danger" onclick="deleteAddress(${addr.id})">Delete</button>
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function openAddAddressModal() {
@@ -249,7 +262,13 @@ $currentPage = 'profile';
             const isDefault = document.getElementById('addressDefault').checked;
 
             if (!label || !address) {
-                alert('Please fill in label and address.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Incomplete Form',
+                    text: 'Please fill in both label and address.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
                 return;
             }
 
@@ -257,7 +276,8 @@ $currentPage = 'profile';
                 addresses.forEach(a => a.is_default = false);
             }
 
-            if (editingDd) {
+            // Use strict check against null so 0 isn't treated as falsy accidentally
+            if (editingId !== null) {
                 const addr = addresses.find(a => a.id === editingId);
                 if (addr) {
                     addr.label = label;
@@ -273,9 +293,18 @@ $currentPage = 'profile';
                 });
             }
 
+            // Reset editing state
+            editingId = null;
+
             renderAddresses();
             $('#addressModal').modal('hide');
-            alert(editingId ? 'Address updated!' : 'New address added!');
+            Swal.fire({
+                icon: 'success',
+                title: editingId !== null ? 'Address Updated!' : 'Address Added!',
+                text: editingId !== null ? 'Your address has been updated.' : 'New address has been saved.',
+                timer: 1500,
+                showConfirmButton: false
+            });
         }
 
         function editAddress(id) {
@@ -291,10 +320,27 @@ $currentPage = 'profile';
         }
 
         function deleteAddress(id) {
-            if (!confirm('Are you sure you want to delete this address?')) return;
-            addresses = addresses.filter(a => a.id !== id);
-            renderAddresses();
-            alert('Address deleted.');
+            Swal.fire({
+                title: 'Delete Address?',
+                text: "This action cannot be undone.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    addresses = addresses.filter(a => a.id !== id);
+                    renderAddresses();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: 'Address has been removed.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                }
+            });
         }
 
         function setAsDefault(id) {
@@ -302,6 +348,16 @@ $currentPage = 'profile';
                 a.is_default = (a.id === id);
             });
             renderAddresses();
+        }
+
+        // small utility to avoid HTML injection when rendering
+        function escapeHtml(text) {
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
 
         // Bind buttons

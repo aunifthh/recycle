@@ -1,6 +1,11 @@
 <?php
-// session_start();
+session_start(); // ✅ Essential for accessing $_SESSION
 $currentPage = 'dashboard';
+
+// Optional: Set mock session name if not set (for demo safety)
+if (!isset($_SESSION['name'])) {
+    $_SESSION['name'] = 'Nur';
+}
 ?>
 
 <!DOCTYPE html>
@@ -14,8 +19,9 @@ $currentPage = 'dashboard';
     <!-- AdminLTE -->
     <link rel="stylesheet" href="../app/plugins/fontawesome-free/css/all.min.css">
     <link rel="stylesheet" href="../app/dist/css/adminlte.min.css">
-    <link rel="stylesheet" href="../app/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" href="../app/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -28,7 +34,7 @@ $currentPage = 'dashboard';
         <div class="content-wrapper">
             <section class="content-header">
                 <div class="container-fluid">
-                    <h3 class="mb-2">Welcome back, <?php echo htmlspecialchars($_SESSION['name'] ?? 'Nur'); ?>!</h3>
+                    <h3 class="mb-2">Welcome back, <?php echo htmlspecialchars($_SESSION['name']); ?>!</h3>
                 </div>
             </section>
 
@@ -40,7 +46,7 @@ $currentPage = 'dashboard';
                         <div class="col-lg-4 col-6">
                             <div class="small-box bg-info">
                                 <div class="inner">
-                                    <h3 id="total-requests">3</h3>
+                                    <h3 id="total-requests">2</h3>
                                     <p>Total Requests</p>
                                 </div>
                                 <div class="icon">
@@ -53,13 +59,13 @@ $currentPage = 'dashboard';
                         <div class="col-lg-4 col-6">
                             <div class="small-box bg-success">
                                 <div class="inner">
-                                    <h3 id="earned-amount">RM 85</h3>
+                                    <h3 id="earned-amount">RM 120</h3>
                                     <p>Total Earned</p>
                                 </div>
                                 <div class="icon">
                                     <i class="fas fa-wallet"></i>
                                 </div>
-                                <a href="" class="small-box-footer">View History <i class="fas fa-arrow-circle-right"></i></a>
+                                <a href="#" class="small-box-footer">View History <i class="fas fa-arrow-circle-right"></i></a>
                             </div>
                         </div>
 
@@ -91,23 +97,21 @@ $currentPage = 'dashboard';
                                     <table class="table table-bordered table-striped">
                                         <thead>
                                             <tr>
-                                                <th>Request ID</th>
-                                                <th>Recyclables</th>
-                                                <th>Weight</th>
+                                                <th>ID</th>
+                                                <th>Recyclable Type</th>
+                                                <th>Quantity</th>
                                                 <th>Status</th>
                                                 <th>Date</th>
-                                                <th>Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <!-- Example static rows – replace with dynamic PHP fetch later -->
+                                            <!-- Static demo data -->
                                             <tr>
                                                 <td>REQ101</td>
                                                 <td>Plastic, Paper</td>
                                                 <td>4.5 kg</td>
                                                 <td><span class="badge badge-warning">Pending</span></td>
                                                 <td>2025-11-28</td>
-                                                <td><a href="view_request.php?id=REQ101" class="btn btn-sm btn-info">View</a></td>
                                             </tr>
                                             <tr>
                                                 <td>REQ098</td>
@@ -115,7 +119,6 @@ $currentPage = 'dashboard';
                                                 <td>2.1 kg</td>
                                                 <td><span class="badge badge-success">Completed</span></td>
                                                 <td>2025-11-20</td>
-                                                <td><a href="view_request.php?id=REQ098" class="btn btn-sm btn-info">View</a></td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -124,26 +127,35 @@ $currentPage = 'dashboard';
                         </div>
                     </div>
 
+                </div> <!-- /.container-fluid -->
             </section>
             <!-- /.content -->
         </div>
 
-        <?php include("../footer/adminfooter.php"); ?>
+        <?php include("../footer/userfooter.php"); ?>
     </div>
-
 
     <!-- Scripts -->
     <script src="../app/plugins/jquery/jquery.min.js"></script>
     <script src="../app/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="../app/plugins/datatables/jquery.dataTables.min.js"></script>
-    <script src="../app/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
     <script src="../app/dist/js/adminlte.min.js"></script>
 
+    <!-- Optional: Example SweetAlert usage (commented) -->
+    <!--
     <script>
-        document.getElementById('total-requests').textContent = '2';
-        document.getElementById('earned-amount').textContent = 'RM 120';
-        document.getElementById('pending-request').textContent = '1';
+        // Example: Show welcome message on first visit (optional)
+        // if (!localStorage.getItem('seenWelcome')) {
+        //     Swal.fire({
+        //         title: 'Welcome!',
+        //         text: 'You can manage your recycling requests here.',
+        //         icon: 'info',
+        //         timer: 2500,
+        //         showConfirmButton: false
+        //     });
+        //     localStorage.setItem('seenWelcome', 'true');
+        // }
     </script>
+    -->
 
 </body>
 
