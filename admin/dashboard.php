@@ -1,6 +1,91 @@
 <?php
-// session_start();
+session_start();
 $currentPage = 'dashboard';
+
+// --- Dummy Data Initialization (if not set) ---
+if (!isset($_SESSION['admin_pickup_requests'])) {
+    $_SESSION['admin_pickup_requests'] = [
+        [
+            'id' => 'REQ001',
+            'customer' => 'Sheikh Hafizuddin',
+            'address' => 'Kuala Lumpur, WP',
+            'items' => [['category' => 'Plastic', 'quantity' => 10]],
+            'status' => 'Pending',
+            'date' => '2025-12-21',
+            'time' => '10:00',
+            'remarks' => 'Please call before arrival'
+        ],
+        [
+            'id' => 'REQ002',
+            'customer' => 'Auni Fatihah',
+            'address' => 'Selangor, MY',
+            'items' => [['category' => 'Paper', 'quantity' => 5]],
+            'status' => 'Quoted',
+            'date' => '2025-12-22',
+            'time' => '14:00',
+            'remarks' => '',
+            'actual_weight' => 5.2,
+            'quoted_price' => 2.60
+        ],
+        [
+            'id' => 'REQ003',
+            'customer' => 'Bob Marley',
+            'address' => 'Penang, MY',
+            'items' => [['category' => 'Metal', 'quantity' => 20]],
+            'status' => 'Waiting Payment',
+            'date' => '2025-12-20',
+            'time' => '09:00',
+            'remarks' => 'Heavy items',
+            'actual_weight' => 21.0,
+            'quoted_price' => 63.00
+        ],
+        [
+            'id' => 'REQ004',
+            'customer' => 'Alice Williams',
+            'address' => 'Johor, MY',
+            'items' => [['category' => 'Electronics', 'quantity' => 1]],
+            'status' => 'Completed',
+            'date' => '2025-12-18',
+            'time' => '11:00',
+            'remarks' => '',
+            'actual_weight' => 2.5,
+            'quoted_price' => 50.00
+        ],
+        [
+            'id' => 'REQ005',
+            'customer' => 'Charlie Brown',
+            'address' => 'Perak, MY',
+            'items' => [['category' => 'Glass', 'quantity' => 10]],
+            'status' => 'Cancelled',
+            'date' => '2025-12-19',
+            'time' => '15:00',
+            'remarks' => 'Cancelled by user'
+        ],
+         [
+            'id' => 'REQ006',
+            'customer' => 'David Beckham',
+            'address' => 'Kedah, MY',
+            'items' => [['category' => 'Plastic', 'quantity' => 15]],
+            'status' => 'Rejected',
+            'date' => '2025-12-23',
+            'time' => '16:00',
+            'remarks' => 'Price too low',
+            'actual_weight' => 14.5,
+            'quoted_price' => 10.00
+        ]
+    ];
+}
+
+$requests = $_SESSION['admin_pickup_requests'];
+
+// --- Calculate Stats ---
+$toQuoteCount = count(array_filter($requests, fn($r) => $r['status'] === 'Pending'));
+$pendingPickupCount = count(array_filter($requests, fn($r) => $r['status'] === 'Waiting Payment'));
+$revenue = array_sum(array_column(array_filter($requests, fn($r) => $r['status'] === 'Completed'), 'quoted_price'));
+
+// --- Get Latest Tasks (First 5) ---
+$latestTasks = array_slice($requests, 0, 5);
+
 ?>
 
 <!DOCTYPE html>
@@ -40,7 +125,7 @@ $currentPage = 'dashboard';
                         <!-- small box -->
                         <div class="small-box bg-info">
                             <div class="inner">
-                                <h3>12</h3>
+                                <h3><?= $toQuoteCount ?></h3>
                                 <p>To Quote (Pending)</p>
                             </div>
                             <div class="icon">
@@ -54,8 +139,8 @@ $currentPage = 'dashboard';
                         <!-- small box -->
                         <div class="small-box bg-warning">
                             <div class="inner">
-                                <h3>5</h3>
-                                <p>Pending Pickups</p>
+                                <h3><?= $pendingPickupCount ?></h3>
+                                <p>Pending Pickups (Waiting Payment)</p>
                             </div>
                             <div class="icon">
                                 <i class="fas fa-truck-loading"></i>
@@ -68,8 +153,8 @@ $currentPage = 'dashboard';
                         <!-- small box -->
                         <div class="small-box bg-success">
                             <div class="inner">
-                                <h3>RM 450</h3>
-                                <p>Today's Revenue</p>
+                                <h3>RM <?= number_format($revenue, 2) ?></h3>
+                                <p>Total Revenue</p>
                             </div>
                             <div class="icon">
                                 <i class="fas fa-money-bill-wave"></i>
@@ -90,7 +175,7 @@ $currentPage = 'dashboard';
                             <div class="card-header">
                                 <h3 class="card-title">
                                     <i class="fas fa-exclamation-circle mr-1"></i>
-                                    Urgent Tasks
+                                    Latest Requests
                                 </h3>
                             </div><!-- /.card-header -->
                             <div class="card-body">
@@ -106,30 +191,27 @@ $currentPage = 'dashboard';
                                     </tr>
                                     </thead>
                                     <tbody>
+                                    <?php foreach ($latestTasks as $task): 
+                                        $status = $task['status'];
+                                        $badgeClass = 'badge-secondary';
+                                        if ($status === 'Pending') $badgeClass = 'badge-warning';
+                                        elseif ($status === 'Quoted') $badgeClass = 'badge-info';
+                                        elseif ($status === 'Waiting Payment') $badgeClass = 'badge-primary';
+                                        elseif ($status === 'Completed') $badgeClass = 'badge-success';
+                                        elseif ($status === 'Rejected') $badgeClass = 'badge-danger';
+
+                                        $itemStr = implode(', ', array_map(fn($i) => $i['category'], $task['items']));
+                                        $qtyStr = implode(', ', array_map(fn($i) => $i['quantity'] . ' kg', $task['items']));
+                                    ?>
                                     <tr>
-                                        <td>REQ001</td>
-                                        <td>Sheikh Hafizuddin</td>
-                                        <td>Plastic</td>
-                                        <td>5 kg</td>
-                                        <td><span class="badge badge-warning">Pending</span></td>
-                                        <td>2023-10-25</td>
+                                        <td><?= $task['id'] ?></td>
+                                        <td><?= $task['customer'] ?></td>
+                                        <td><?= $itemStr ?></td>
+                                        <td><?= $qtyStr ?></td>
+                                        <td><span class="badge <?= $badgeClass ?>"><?= $status ?></span></td>
+                                        <td><?= $task['date'] ?></td>
                                     </tr>
-                                    <tr>
-                                        <td>REQ003</td>
-                                        <td>Bob Marley</td>
-                                        <td>Metal</td>
-                                        <td>2 kg</td>
-                                        <td><span class="badge badge-info">Pending Pickup</span></td>
-                                        <td>2023-10-26</td>
-                                    </tr>
-                                    <tr>
-                                        <td>REQ005</td>
-                                        <td>Charlie Brown</td>
-                                        <td>Glass</td>
-                                        <td>8 kg</td>
-                                        <td><span class="badge badge-warning">Pending</span></td>
-                                        <td>2023-10-25</td>
-                                    </tr>
+                                    <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div><!-- /.card-body -->
