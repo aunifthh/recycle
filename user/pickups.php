@@ -37,21 +37,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $index = $_POST['index'] ?? null;
 
     if ($index !== null && isset($_SESSION['pickup_requests'][$index])) {
-        switch ($action) {
+        switch ($action){
             case 'accept_quote':
                 $_SESSION['pickup_requests'][$index]['status'] = 'Pending Payment';
                 $_SESSION['pickup_requests'][$index]['accepted_at'] = date('Y-m-d H:i:s');
                 echo json_encode(['ok' => true]);
                 exit;
+
             case 'reject_quote':
                 $_SESSION['pickup_requests'][$index]['status'] = 'Rejected';
                 echo json_encode(['ok' => true]);
+                exit;
+
+            case 'cancel_request':
+                // Prevent cancelling dummy requests
+                if(!($_SESSION['pickup_requests'][$index]['is_dummy'] ?? false)){
+                    $_SESSION['pickup_requests'][$index]['status'] = 'Cancelled';
+                    echo json_encode(['ok' => true]);
+                } else {
+                    echo json_encode(['ok' => false, 'msg' => 'Dummy request cannot be cancelled']);
+                }
                 exit;
         }
     }
     echo json_encode(['ok' => false, 'msg' => 'Invalid request']);
     exit;
 }
+
 
 $requests = $_SESSION['pickup_requests'];
 ?>
