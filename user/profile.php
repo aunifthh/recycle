@@ -1,18 +1,29 @@
 <?php
 session_start();
 
+$defaultUserData = [
+    'name' => 'Ain Nazirah',
+    'email' => 'naz@gmail.com',
+    'phone' => '0123456789',
+    'password' => '',
+    'bank_name' => 'CIMB',
+    'bank_account' => '1004553468',
+    'addresses' => [
+        ['id' => 1, 'label' => 'Home', 'address' => '123 Green Street, Kuala Lumpur', 'is_default' => true],
+        ['id' => 2, 'label' => 'Office', 'address' => 'Level 5, Eco Tower, Bangsar', 'is_default' => false]
+    ]
+];
+
 if (!isset($_SESSION['user_data'])) {
-    $_SESSION['user_data'] = [
-        'name' => 'Ain Nazirah',
-        'email' => 'naz@gmail.com',
-        'phone' => '0123456789',
-        'password' => '',
-        'addresses' => [
-            ['id' => 1, 'label' => 'Home', 'address' => '123 Green Street, Kuala Lumpur', 'is_default' => true],
-            ['id' => 2, 'label' => 'Office', 'address' => 'Level 5, Eco Tower, Bangsar', 'is_default' => false]
-        ]
-    ];
+    $_SESSION['user_data'] = $defaultUserData;
 }
+if (!isset($_SESSION['user_data']['bank_name'])) {
+    $_SESSION['user_data']['bank_name'] = $defaultUserData['bank_name'];
+}
+if (!isset($_SESSION['user_data']['bank_account'])) {
+    $_SESSION['user_data']['bank_account'] = $defaultUserData['bank_account'];
+}
+
 $user = &$_SESSION['user_data'];
 $currentPage = 'profile';
 ?>
@@ -31,7 +42,6 @@ $currentPage = 'profile';
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 
     <style>
         .address-card {
@@ -69,26 +79,26 @@ $currentPage = 'profile';
             <section class="content">
                 <div class="container-fluid">
 
-                    <!-- Profile Section -->
                     <div class="row">
                         <div class="col-md-6">
+                            <!-- Profile Section -->
                             <div class="card card-primary">
                                 <div class="card-header">
                                     <h3 class="card-title"><i class="fas fa-user-edit mr-1"></i> Edit Profile</h3>
                                 </div>
                                 <div class="card-body">
                                     <div class="input-group mb-3">
-                                        <input type="text" id="nameInput" class="form-control" placeholder="Full Name" value="<?= htmlspecialchars($user['name']) ?>" required>
+                                        <input type="text" id="nameInput" class="form-control" placeholder="Full Name" value="<?= htmlspecialchars($user['name'] ?? '') ?>" required>
                                         <div class="input-group-text"><i class="bi bi-person"></i></div>
                                     </div>
 
                                     <div class="input-group mb-3">
-                                        <input type="email" id="emailInput" class="form-control" placeholder="Email" value="<?= htmlspecialchars($user['email']) ?>" required>
+                                        <input type="email" id="emailInput" class="form-control" placeholder="Email" value="<?= htmlspecialchars($user['email'] ?? '') ?>" required>
                                         <div class="input-group-text"><i class="bi bi-envelope"></i></div>
                                     </div>
 
                                     <div class="input-group mb-3">
-                                        <input type="tel" id="phoneInput" class="form-control" placeholder="Phone Number" value="<?= htmlspecialchars($user['phone']) ?>" required>
+                                        <input type="tel" id="phoneInput" class="form-control" placeholder="Phone Number" value="<?= htmlspecialchars($user['phone'] ?? '') ?>" required>
                                         <div class="input-group-text"><i class="bi bi-telephone"></i></div>
                                     </div>
 
@@ -105,9 +115,34 @@ $currentPage = 'profile';
                                     </button>
                                 </div>
                             </div>
+
+                            <!-- Bank Account Section -->
+                            <div class="card card-primary mt-4">
+                                <div class="card-header">
+                                    <h3 class="card-title"><i class="fas fa-credit-card mr-1"></i> Bank Account</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="input-group mb-3">
+                                        <input type="text" id="bankNameInput" class="form-control"
+                                            placeholder="Bank Name (e.g., Maybank, CIMB)" value="<?= htmlspecialchars($user['bank_name'] ?? '') ?>">
+                                        <div class="input-group-text"><i class="fas fa-university"></i></div>
+                                    </div>
+
+                                    <div class="input-group mb-3">
+                                        <input type="text" id="bankAccountInput" class="form-control"
+                                            placeholder="Account Number" value="<?= htmlspecialchars($user['bank_account'] ?? '') ?>">
+                                        <div class="input-group-text"><i class="fas fa-sort-numeric-up"></i></div>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <button id="saveBankBtn" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save Bank Info
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Addresses Section -->
+                        <!-- Right Column: Addresses -->
                         <div class="col-md-6">
                             <div class="card card-success">
                                 <div class="card-header">
@@ -213,9 +248,46 @@ $currentPage = 'profile';
             }
         });
 
+        // Bank Account Management
+        document.getElementById('saveBankBtn').addEventListener('click', function() {
+            const bankName = document.getElementById('bankNameInput').value.trim();
+            const bankAccount = document.getElementById('bankAccountInput').value.trim();
+
+            if (!bankName || !bankAccount) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Information',
+                    text: 'Please fill in both bank name and account number.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                return;
+            }
+
+            // Allow digits and spaces (e.g., "1234 5678 90")
+            if (!/^[0-9\s]+$/.test(bankAccount)) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Account Number',
+                    text: 'Account number should contain only digits and spaces.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                return;
+            }
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Bank Info Saved!',
+                text: 'Your bank details have been updated.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        });
+
         // Address Management 
-        let addresses = <?php echo json_encode($user['addresses']); ?>;
-        let nextId = Math.max(...addresses.map(a => a.id), 0) + 1;
+        let addresses = <?php echo json_encode($user['addresses'] ?? []); ?>;
+        let nextId = addresses.length > 0 ? Math.max(...addresses.map(a => a.id)) + 1 : 1;
         let editingId = null;
 
         function renderAddresses() {
@@ -276,7 +348,6 @@ $currentPage = 'profile';
                 addresses.forEach(a => a.is_default = false);
             }
 
-            // Use strict check against null so 0 isn't treated as falsy accidentally
             if (editingId !== null) {
                 const addr = addresses.find(a => a.id === editingId);
                 if (addr) {
@@ -293,9 +364,7 @@ $currentPage = 'profile';
                 });
             }
 
-            // Reset editing state
             editingId = null;
-
             renderAddresses();
             $('#addressModal').modal('hide');
             Swal.fire({
@@ -350,7 +419,6 @@ $currentPage = 'profile';
             renderAddresses();
         }
 
-        // small utility to avoid HTML injection when rendering
         function escapeHtml(text) {
             return String(text)
                 .replace(/&/g, '&amp;')
