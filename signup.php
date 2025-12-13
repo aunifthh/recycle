@@ -30,6 +30,15 @@
             margin-bottom: 1.2rem;
         }
 
+        .signup-logo h3 {
+            font-weight: 600;
+            color: #28a745;
+        }
+
+        .signup-logo small {
+            font-size: 13px;
+        }
+
         .signup-logo a {
             font-size: 24px;
             font-weight: 600;
@@ -80,7 +89,13 @@
 
     <div class="signup-box">
         <div class="signup-logo">
-            <a>Create Your Account</a>
+            <div class="d-flex justify-content-center align-items-center gap-2">
+                <img src="images/truck.png" alt="Greencycle Logo" width="40">
+                <h3 class="mb-0">Greencycle</h3>
+            </div>
+            <small class="text-muted d-block mt-1">
+                Community Recycling Collection System
+            </small>
         </div>
 
         <div class="card card-wider">
