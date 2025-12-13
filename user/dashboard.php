@@ -65,7 +65,6 @@ if (!isset($_SESSION['name'])) {
                                 <div class="icon">
                                     <i class="fas fa-wallet"></i>
                                 </div>
-                                <a href="#" class="small-box-footer">View History <i class="fas fa-arrow-circle-right"></i></a>
                             </div>
                         </div>
 
