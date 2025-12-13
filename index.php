@@ -36,6 +36,15 @@
             text-decoration: none;
         }
 
+        .login-logo h3 {
+            font-weight: 600;
+            color: #28a745;
+        }
+
+        .login-logo small {
+            font-size: 13px;
+        }
+
         .card-wider {
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.11);
@@ -83,8 +92,13 @@
 
     <div class="login-box">
         <div class="login-logo">
-            <h3>Greencycle</h3>
-            <a>Community Recycling Collection System</a>
+            <div class="d-flex justify-content-center align-items-center gap-2">
+                <img src="images/truck.png" alt="Greencycle Logo" width="40">
+                <h3 class="mb-0">Greencycle</h3>
+            </div>
+            <small class="text-muted d-block mt-1">
+                Community Recycling Collection System
+            </small>
         </div>
 
         <div class="card card-wider">
