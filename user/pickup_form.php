@@ -81,12 +81,21 @@ $addresses_json = json_encode($user['addresses']);
 <head>
 <meta charset="UTF-8">
 <title>Create Pickup Request | Greencycle</title>
-<link rel="icon" type="image/png" href="../images/truck.png">
-<link rel="stylesheet" href="../app/plugins/fontawesome-free/css/all.min.css">
-<link rel="stylesheet" href="../app/dist/css/adminlte.min.css">
+<link rel="icon" type="image/png" href="../images/truck.png"><link rel="stylesheet" href="../app/plugins/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="../app/dist/css/adminlte.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+
 <style>
     .required { color: red; }
     .item-table th, .item-table td { vertical-align: middle; }
+
+    #pickupDate[readonly] {
+    background-color: #fff !important;
+    cursor: pointer;
+}
 </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -178,13 +187,15 @@ $addresses_json = json_encode($user['addresses']);
     <div class="col-md-6">
         <div class="form-group">
             <label for="pickupDate"><i class="fas fa-calendar-alt"></i> Pickup Date <span class="required">*</span></label>
-            <input type="date" id="pickupDate" class="form-control" required>
+            <input type="text" id="pickupDate" class="form-control" placeholder="Please select your pickup date" readonly required>
             <small class="form-text text-muted">
                 Pickup requests can be scheduled starting <strong>2 days from today</strong>. 
+                Pickups are available <strong>Monday – Friday</strong> only.  
                 Cancellations must be made at least <strong>2 days before</strong> the scheduled pickup.
             </small>
         </div>
     </div>
+
     <div class="col-md-6">
         <div class="form-group">
             <label for="pickupTime"><i class="fas fa-clock"></i> Pickup Time <span class="required">*</span></label>
@@ -248,65 +259,80 @@ $addresses_json = json_encode($user['addresses']);
     </div>
 </div>
 
-<!-- Confirm Submission Modal -->
-<div class="modal fade" id="confirmModal">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header text-white bg-success">
-        <h5 class="modal-title">Confirm Submission</h5>
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p>Are you sure you want to submit this pickup request?</p>
-      </div>
-      <div class="modal-footer">
-        <button id="confirmNo" class="btn btn-secondary" data-dismiss="modal">No</button>
-        <button id="confirmYes" class="btn btn-success">Yes</button>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- Success Modal -->
-<div class="modal fade" id="successModal" tabindex="-1">
-  <div class="modal-dialog modal-sm modal-dialog-centered">
-    <div class="modal-content border-success">
-      <div class="modal-header bg-success text-white">
-        <h5 class="modal-title">Success!</h5>
-      </div>
-      <div class="modal-body">
-        Pickup request submitted successfully!
-      </div>
-    </div>
-  </div>
-</div>
 
 <script src="../app/plugins/jquery/jquery.min.js"></script>
 <script src="../app/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="../app/dist/js/adminlte.min.js"></script>
 
+<input type="date" id="pickupDate">
 <script>
-const TIME_SLOTS = ["09:00","10:00","11:00","14:00","15:00","16:00"];
+// ================= CONFIG =================
+const TIME_SLOTS = ["09:00","11:00","13:00","15:00","17:00"];
 const SLOT_CAPACITY = 2;
 let savedAddresses = <?php echo $addresses_json; ?>;
-let nextAddrId = Math.max(...savedAddresses.map(a=>a.id),0)+1;
+let nextAddrId = Math.max(...savedAddresses.map(a => a.id), 0) + 1;
 let editingId = null;
 let items = [];
 
-// --- PICKUP DATE/TIME ---
-let minDate = new Date(); minDate.setDate(minDate.getDate()+2);
-document.getElementById("pickupDate").min = minDate.toISOString().split("T")[0];
+// ================= DATE RULES =================
+// today at 00:00
+const today = new Date();
+today.setHours(0,0,0,0);
 
-function getAllBooked(){ return JSON.parse(localStorage.getItem("pickupRequests")||"[]"); }
-function updateAvailableTimes(date){
-    const booked = getAllBooked().filter(r=>r.date===date);
-    let timeSelect = $("#pickupTime"); timeSelect.html('<option value="" disabled selected>-- Select Time --</option>');
-    TIME_SLOTS.forEach(t=>{
-        let disabled = booked.filter(r=>r.time===t).length>=SLOT_CAPACITY?'disabled':''; 
-        timeSelect.append(`<option value="${t}" ${disabled}>${t}</option>`);
+// minimum pickup date = today + 2 days
+const minDate = new Date(today);
+minDate.setDate(today.getDate() + 2);
+
+// maximum date (optional, e.g., 1 year from today)
+const maxDate = new Date(today);
+maxDate.setFullYear(maxDate.getFullYear() + 1);
+
+// pickup date input
+const pickupDateInput = document.getElementById("pickupDate");
+
+// ================= FLATPICKR DATE PICKER =================
+flatpickr("#pickupDate", {
+    minDate: minDate,
+    maxDate: maxDate,
+    dateFormat: "Y-m-d",
+    disable: [
+        function(date) {
+            // disable weekends (0 = Sunday, 6 = Saturday)
+            return (date.getDay() === 0 || date.getDay() === 6);
+        }
+    ],
+    placeholder: "Please select your pickup date",
+    onChange: function(selectedDates, dateStr) {
+        if (!dateStr) return;
+        updateAvailableTimes(dateStr);
+    }
+});
+
+// ================= TIME SLOT LOGIC =================
+function getAllBooked() {
+    return JSON.parse(localStorage.getItem("pickupRequests") || "[]");
+}
+
+function updateAvailableTimes(date) {
+    const booked = getAllBooked().filter(r => r.date === date);
+    const timeSelect = $("#pickupTime");
+    timeSelect.html('<option value="" disabled selected>-- Select Time --</option>');
+
+    TIME_SLOTS.forEach(time => {
+        const count = booked.filter(r => r.time === time).length;
+        const disabled = count >= SLOT_CAPACITY ? "disabled" : "";
+        timeSelect.append(`<option value="${time}" ${disabled}>${time}</option>`);
     });
 }
-$("#pickupDate").on("input", function(){ updateAvailableTimes(this.value); });
+
+
+
+
+
+
+
+
 
 // --- ITEMS ---
 function updateItemSubtotal(){
@@ -331,6 +357,8 @@ $('#addItemBtn').on('click', function(){
     $('#categorySelect').val(''); $('#itemQty').val(''); $('#itemSubtotal').val('0.00');
 });
 $(document).on('click','.removeItemBtn',function(){ items.splice($(this).data('idx'),1); renderItemsTable(); });
+
+
 
 // --- ADDRESSES ---
 function renderAddressDropdown(){
@@ -360,15 +388,26 @@ $('#saveAddressBtn').on('click', function(){
     $('#pickupAddress').val(savedAddresses[savedAddresses.length-1].id);
 });
 
-// --- FORM SUBMIT ---
+
+
+
 $('#pickupForm').on('submit', function(e){
     e.preventDefault();
-    if(items.length===0){ alert('Please add at least one item'); return; }
-    let addressId=$('#pickupAddress').val(); 
-    if(!addressId||addressId==='new'){ alert('Please select address'); return; }
 
-    let addrObj=savedAddresses.find(a=>a.id==addressId);
-    window.tempPickupPayload = {
+    if(items.length === 0){
+        Swal.fire('No Items Added', 'Please add at least one recyclable item.', 'warning');
+        return;
+    }
+
+    let addressId = $('#pickupAddress').val();
+    if(!addressId || addressId === 'new'){
+        Swal.fire('Address Required', 'Please select a pickup address.', 'warning');
+        return;
+    }
+
+    let addrObj = savedAddresses.find(a => a.id == addressId);
+
+    const payload = {
         items,
         address_id: addrObj.id,
         address_label: addrObj.label,
@@ -380,34 +419,50 @@ $('#pickupForm').on('submit', function(e){
         status: "Pending"
     };
 
-    $('#confirmModal').modal('show');
+    Swal.fire({
+        title: 'Confirm Submission',
+        text: 'Are you sure you want to submit this pickup request?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, submit',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if(result.isConfirmed){
+            submitPickupRequest(payload);
+        }
+    });
 });
 
-// --- CONFIRM YES ---
-$('#confirmYes').on('click', function(){
-    const payload = window.tempPickupPayload;
-    if(!payload) return;
 
+
+
+function submitPickupRequest(payload){
     $.post('pickup_form.php', {action:'save_request', ...payload}, function(res){
         if(res.ok){
-            let allRequests = JSON.parse(localStorage.getItem('pickupRequests')||'[]');
+
+            // store for slot checking
+            let allRequests = JSON.parse(localStorage.getItem('pickupRequests') || '[]');
             allRequests.push(payload);
             localStorage.setItem('pickupRequests', JSON.stringify(allRequests));
 
-            $('#confirmModal').modal('hide');
-
-            // Show Success Modal
-            $('#successModal').modal('show');
-            setTimeout(()=> {
-                $('#successModal').modal('hide');
-                window.location.href='pickups.php';
-            }, 2000);
+            Swal.fire({
+                icon: 'success',
+                title: 'Request Submitted',
+                text: 'Your pickup request has been submitted successfully!',
+                timer: 1800,
+                showConfirmButton: false
+            }).then(() => {
+                window.location.href = 'pickups.php';
+            });
 
         } else {
-            alert('Error: '+(res.msg||'Could not save request'));
+            Swal.fire('Error', res.msg || 'Could not save request.', 'error');
         }
-    },'json').fail(function(){ alert('AJAX error'); });
-});
+    }, 'json').fail(() => {
+        Swal.fire('Network Error', 'Please try again later.', 'error');
+    });
+}
+
 
 // INITIAL
 renderAddressDropdown();
