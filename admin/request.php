@@ -7,7 +7,7 @@ $currentPage = 'request';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Pickup Request</title>
+    <title>Pickup Request | Greencycle</title>
     <link rel="icon" type="image/png" href="../images/truck.png">
 
     <!-- AdminLTE -->

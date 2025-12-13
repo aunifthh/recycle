@@ -7,7 +7,7 @@ $currentPage = 'dashboard';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard</title>
+    <title>Dashboard | Greencycle</title>
     <link rel="icon" type="image/png" href="../images/truck.png">
 
     <!-- AdminLTE -->

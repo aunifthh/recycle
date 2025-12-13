@@ -80,7 +80,8 @@ $addresses_json = json_encode($user['addresses']);
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Create Pickup Request</title>
+<title>Create Pickup Request | Greencycle</title>
+<link rel="icon" type="image/png" href="../images/truck.png">
 <link rel="stylesheet" href="../app/plugins/fontawesome-free/css/all.min.css">
 <link rel="stylesheet" href="../app/dist/css/adminlte.min.css">
 <style>

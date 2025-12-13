@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Community Recycling Collection System - Login</title>
+    <title>Greencycle</title>
     <link rel="icon" type="image/png" href="images/truck.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -83,6 +83,7 @@
 
     <div class="login-box">
         <div class="login-logo">
+            <h3>Greencycle</h3>
             <a>Community Recycling Collection System</a>
         </div>
 

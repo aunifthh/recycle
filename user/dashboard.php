@@ -13,7 +13,7 @@ if (!isset($_SESSION['name'])) {
 
 <head>
     <meta charset="UTF-8">
-    <title>Customer Dashboard</title>
+    <title>Customer Dashboard | Greencycle</title>
     <link rel="icon" type="image/png" href="../images/truck.png">
 
     <!-- AdminLTE -->

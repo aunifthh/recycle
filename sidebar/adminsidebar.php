@@ -6,10 +6,10 @@
     <a href="dashboard.php" class="brand-link">
         <img
             src="../images/truck.png"
-            alt="Recycle Logo"
+            alt="Greencycle Logo"
             class="brand-image"
         />
-        <span class="brand-text font-weight-light">Recycle</span>
+        <span class="brand-text font-weight-light">Greencycle</span>
     </a>
 
 

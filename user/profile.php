@@ -33,7 +33,7 @@ $currentPage = 'profile';
 
 <head>
     <meta charset="UTF-8">
-    <title>Profile Management</title>
+    <title>Profile Management | Greencycle</title>
     <link rel="icon" type="image/png" href="../images/truck.png">
 
     <!-- AdminLTE + Bootstrap Icons -->

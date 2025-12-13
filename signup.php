@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Sign Up - Community Recycling Collection System</title>
+    <title>Sign Up | Greencycle</title>
     <link rel="icon" type="image/png" href="images/truck.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 

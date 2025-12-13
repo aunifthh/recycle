@@ -59,7 +59,8 @@ $requests = $_SESSION['pickup_requests'];
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Pickup Request</title>
+<title>Pickup Request | Greencycle</title>
+<link rel="icon" type="image/png" href="../images/truck.png">
 <link rel="stylesheet" href="../app/plugins/fontawesome-free/css/all.min.css">
 <link rel="stylesheet" href="../app/dist/css/adminlte.min.css">
 <link rel="stylesheet" href="../app/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">

@@ -6,7 +6,7 @@ $currentPage = 'staff';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>User Management</title>
+    <title>Staff Management | Greencycle</title>
 
     <link rel="icon" type="image/png" href="../images/truck.png">
 
