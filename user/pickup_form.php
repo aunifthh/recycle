@@ -1,472 +1,249 @@
 <?php
 session_start();
-
-// --- Mock user/session data ---
-if (!isset($_SESSION['user_data'])) {
-    $_SESSION['user_data'] = [
-        'name' => 'Ali Rahman',
-        'email' => 'ali@example.com',
-        'phone' => '0123456789',
-        'password' => '',
-        'addresses' => [
-            ['id' => 1, 'label' => 'Home', 'address' => '123 Green Street, Kuala Lumpur', 'is_default' => true],
-            ['id' => 2, 'label' => 'Office', 'address' => 'Level 5, Eco Tower, Bangsar', 'is_default' => false]
-        ]
-    ];
-}
-$user = &$_SESSION['user_data'];
-
-// --- AJAX endpoints ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    header('Content-Type: application/json; charset=utf-8');
-    $action = $_POST['action'];
-
-    if($action === 'save_request'){
-        $payload = [
-            'items' => $_POST['items'] ?? [],
-            'address_id' => $_POST['address_id'] ?? '',
-            'address_label' => $_POST['address_label'] ?? '',
-            'address' => $_POST['address'] ?? '',
-            'date' => $_POST['date'] ?? '',
-            'time' => $_POST['time'] ?? '',
-            'remarks' => $_POST['remarks'] ?? '',
-            'totalPrice' => $_POST['totalPrice'] ?? 0,
-            'status' => $_POST['status'] ?? 'Pending',
-            'created_at' => date('Y-m-d H:i:s')
-        ];
-
-        $_SESSION['pickup_requests'] = $_SESSION['pickup_requests'] ?? [];
-        $_SESSION['pickup_requests'][] = $payload;
-
-        echo json_encode(['ok' => true, 'request' => $payload]);
-        exit;
-    }
-
-    if($action === 'cancel_request'){
-        $index = $_POST['index'] ?? null;
-        if($index !== null && isset($_SESSION['pickup_requests'][$index])){
-            $req = $_SESSION['pickup_requests'][$index];
-            $today = new DateTime();
-            $pickupDate = new DateTime($req['date']);
-            $diffDays = ($pickupDate->getTimestamp() - $today->getTimestamp()) / (60*60*24);
-
-            if($diffDays >= 2){
-                $_SESSION['pickup_requests'][$index]['status'] = 'Cancelled';
-                echo json_encode(['ok'=>true]);
-                exit;
-            } else {
-                echo json_encode(['ok'=>false,'msg'=>'Cannot cancel within 2 days']);
-                exit;
-            }
-        }
-        echo json_encode(['ok'=>false,'msg'=>'Invalid request']);
-        exit;
-    }
-
-    if($action === 'delete_all_requests'){
-        $_SESSION['pickup_requests'] = [];
-        echo json_encode(['ok'=>true]);
-        exit;
-    }
-
-    echo json_encode(['ok'=>false,'msg'=>'Unknown action']);
-    exit;
-}
-
+$currentPage = 'pickups';
+$user = [
+    'name'=>'Ali Rahman',
+    'email'=>'ali@example.com',
+    'phone'=>'0123456789',
+    'addresses'=>[
+        ['id'=>1,'label'=>'Home','address'=>'123 Green Street, Kuala Lumpur','is_default'=>true],
+        ['id'=>2,'label'=>'Office','address'=>'Level 5, Eco Tower, Bangsar','is_default'=>false]
+    ]
+];
 $addresses_json = json_encode($user['addresses']);
 ?>
-
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Create Pickup Request | Greencycle</title>
-<link rel="icon" type="image/png" href="../images/truck.png"><link rel="stylesheet" href="../app/plugins/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="../app/dist/css/adminlte.min.css">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+                <title>Create Pickup Request | Greencycle</title>
+                <link rel="icon" href="../images/truck.png">
+                <link rel="stylesheet" href="../app/plugins/fontawesome-free/css/all.min.css">
+                <link rel="stylesheet" href="../app/dist/css/adminlte.min.css">
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+                <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                <style>
+                .required { color:red; }
+                .item-table th, .item-table td { vertical-align: middle; }
+                #pickupDate[readonly] { background-color:#fff !important; cursor:pointer; }
+                </style>
+                </head>
+                    <body class="hold-transition sidebar-mini layout-fixed">
+                        <div class="wrapper">
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+                         <?php include("../navbar/usernavbar.php"); ?>
+                         <?php include("../sidebar/usersidebar.php"); ?>
 
+                        <div class="content-wrapper">
+                        <section class="content-header">
+                            <div class="container-fluid d-flex justify-content-between align-items-center">
+                            <h3 class="mb-2">Pickup Request / Add Request</h3>
+                            <a href="pickups.php" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+                            </div>
+                        </section>
 
-<style>
-    .required { color: red; }
-    .item-table th, .item-table td { vertical-align: middle; }
+                        <section class="content">
+                            <div class="container-fluid">
+                            <div class="card shadow-lg">
+                            <div class="card-header bg-success text-white">
+                            <h4 class="card-title mb-0"><i class="fas fa-recycle"></i> Create Pickup Request</h4>
+                            </div>
 
-    #pickupDate[readonly] {
-    background-color: #fff !important;
-    cursor: pointer;
-}
-</style>
-</head>
-<body class="hold-transition sidebar-mini layout-fixed">
-<div class="wrapper">
-<?php include("../navbar/usernavbar.php"); ?>
-<?php include("../sidebar/usersidebar.php"); ?>
+                        <!-- FORM -->
+                            <form id="pickupForm" method="post" action="pickups.php">
+                            <div class="card-body">
 
-<div class="content-wrapper">
-<section class="content-header">
-    <div class="container-fluid d-flex justify-content-between align-items-center">
-        <h3 class="mb-2">Pickup Request / Add Request</h3>
-        <a href="pickups.php" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back
-        </a>
-    </div>
-</section>
+                        <!-- ADD ITEM -->
+                        <div class="form-row align-items-end">
+                         <div class="col-md-4">
+                            <label>Recyclable Category <span class="required">*</span></label>
+                                <select id="categorySelect" class="form-control">
+                                    <option value="" disabled selected>-- Select Category --</option>
+                                    <option value="Paper" data-rate="0.5">Paper — RM0.50 / KG</option>
+                                    <option value="Plastic" data-rate="0.8">Plastic — RM0.80 / KG</option>
+                                    <option value="Metal" data-rate="3.0">Metal — RM3.00 / KG</option>
+                                    <option value="Glass" data-rate="0.2">Glass — RM0.20 / KG</option>
+                                    <option value="Electronics" data-rate="10">Electronics — RM10 / KG</option>
+                                </select>
+                            </div>
+                                <div class="col-md-3">
+                                    <label>Quantity (KG) <span class="required">*</span></label>
+                                    <input type="number" id="itemQty" class="form-control" min="0" step="0.01" placeholder="0.00">
+                                </div>
+                                <div class="col-md-2">
+                                    <label>Subtotal (RM)</label>
+                                    <input type="text" id="itemSubtotal" class="form-control" readonly value="0.00">
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" id="addItemBtn" class="btn btn-success btn-block">
+                                    <i class="fas fa-plus"></i> Add Item
+                                </button>
+                            </div>
+                        </div>
 
-<section class="content">
-<div class="container-fluid">
-<div class="card shadow-lg">
-<div class="card-header bg-success text-white">
-<h4 class="card-title mb-0"><i class="fas fa-recycle"></i> Create Pickup Request</h4>
-</div>
+                        <!-- ITEMS TABLE -->
+                        <div class="mt-4">
+                            <table class="table table-bordered item-table">
+                                <thead class="thead-light">
+                                <tr>
+                                <th>#</th><th>Category</th><th>Quantity (KG)</th><th>Subtotal (RM)</th><th>Action</th>
+                                </tr>
+                                </thead>
+                                  <tbody id="itemsBody"></tbody>
+                                <tfoot>
+                                    <tr>
+                                    <th colspan="3" class="text-right">Total Price (RM):</th>
+                                    <th id="totalPrice">0.00</th><th></th>
+                                    </tr>
+                                </tfoot>
+                            <small><strong>Please note: Estimated weight/price may differ from actual quotation. Weigh accurately for exact quote.</strong></small>
+                            </table>
+                        </div>
 
-<form id="pickupForm">
-<div class="card-body">
+                        <!-- PICKUP ADDRESS -->
+                        <div class="form-group">
+                             <label>Pickup Address <span class="required">*</span></label>
+                              <select id="pickupAddress" class="form-control" name="pickupAddress" required>
+                                 <option value="" disabled selected>-- Select Pickup Address --</option>
+                            </select>
+                        </div>
 
-    <!-- ADD RECYCLABLE ITEM -->
-    <div class="form-row align-items-end">
-        <div class="col-md-4">
-            <label>Recyclable Category <span class="required">*</span></label>
-            <select id="categorySelect" class="form-control">
-                <option value="" disabled selected>-- Select Category --</option>
-                <option value="Paper" data-rate="0.5">Paper — RM0.50 / KG</option>
-                <option value="Plastic" data-rate="0.8">Plastic — RM0.80 / KG</option>
-                <option value="Metal" data-rate="3.0">Metal — RM3.00 / KG</option>
-                <option value="Glass" data-rate="0.2">Glass — RM0.20 / KG</option>
-                <option value="Electronics" data-rate="10">Electronics — RM10 / KG</option>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <label>Quantity (KG) <span class="required">*</span></label>
-            <input type="number" id="itemQty" class="form-control" min="0" step="0.01" placeholder="0.00">
-        </div>
-        <div class="col-md-2">
-            <label>Subtotal (RM)</label>
-            <input type="text" id="itemSubtotal" class="form-control" readonly value="0.00">
-        </div>
-        <div class="col-md-3">
-            <button type="button" id="addItemBtn" class="btn btn-success btn-block">
-                <i class="fas fa-plus"></i> Add Item
-            </button>
-        </div>
-    </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                <label for="pickupDate"><i class="fas fa-calendar-alt"></i> Pickup Date <span class="required">*</span></label>
+                                <input type="text" id="pickupDate" class="form-control" placeholder="Select pickup date" readonly required name="pickupDate">
+                                    <small class="form-text text-muted">
+                                    Pickup requests start <strong>2 days from today</strong>. Monday – Friday only. Cancellation ≥ 2 days before pickup.
+                                    </small>
+                                </div>
+                            </div>
 
-    <!-- ITEMS TABLE -->
-    <div class="mt-4">
-        <table class="table table-bordered item-table">
-            <thead class="thead-light">
-                <tr>
-                    <th>#</th>
-                    <th>Category</th>
-                    <th>Quantity (KG)</th>
-                    <th>Subtotal (RM)</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="itemsBody"></tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="3" class="text-right">Total Price (RM):</th>
-                    <th id="totalPrice">0.00</th>
-                    <th></th>
-                </tr>
-            </tfoot>
-            <small><strong><small> Please note: Estimated weight/price may differ from the actual quotation. Please weigh items accurately for an exact quote</strong></small>
-        </table>
-    </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="pickupTime"><i class="fas fa-clock"></i> Pickup Time <span class="required">*</span></label>
+                                    <select id="pickupTime" class="form-control" required name="pickupTime">
+                                        <option value="" disabled selected>-- Select Time --</option>
+                                    </select>
+                                    <small class="form-text text-muted">Each time slot can be booked only once.</small>
+                                </div>
+                            </div>
+                        </div>
 
-    <!-- Pickup Address -->
-    <div class="form-group">
-        <label>Pickup Address <span class="required">*</span></label>
-        <select id="pickupAddress" class="form-control" required>
-            <option value="" disabled selected>-- Select Pickup Address --</option>
-        </select>
-    </div>
+                        <div class="form-group mt-2">
+                            <label>Remark</label>
+                            <textarea id="remarks" class="form-control" placeholder="Optional" name="remarks"></textarea>
+                        </div>
 
-<div class="row">
-    <div class="col-md-6">
-        <div class="form-group">
-            <label for="pickupDate"><i class="fas fa-calendar-alt"></i> Pickup Date <span class="required">*</span></label>
-            <input type="text" id="pickupDate" class="form-control" placeholder="Please select your pickup date" readonly required>
-            <small class="form-text text-muted">
-                Pickup requests can be scheduled starting <strong>2 days from today</strong>. 
-                Pickups are available <strong>Monday – Friday</strong> only.  
-                Cancellations must be made at least <strong>2 days before</strong> the scheduled pickup.
-            </small>
-        </div>
-    </div>
+                    </div>
 
-    <div class="col-md-6">
-        <div class="form-group">
-            <label for="pickupTime"><i class="fas fa-clock"></i> Pickup Time <span class="required">*</span></label>
-            <select id="pickupTime" class="form-control" required>
-                <option value="" disabled selected>-- Select Time --</option>
-            </select>
-            <small class="form-text text-muted"> Select an available time slot for your pickup. Each slot can only be booked once. </small>
-        </div>
-    </div>
-</div>
+                        <div class="card-footer text-right">
+                             <button type="submit" class="btn btn-success"><i class="fas fa-paper-plane"></i> Submit Request</button>
+                        </div>
+                        </form>
 
-<div class="form-group mt-2">
-    <label>Remark</label>
-    <textarea id="remarks" class="form-control" placeholder="Optional"></textarea>
-</div>
+                        </div>
+                        </div>
+                        </section>
+                        </div>
 
-</div>
+                        <?php include("../footer/userfooter.php"); ?>
 
-<div class="card-footer text-right">
-    <button type="submit" class="btn btn-success"><i class="fas fa-paper-plane"></i> Submit Request</button>
-</div>
-</form>
+                        <script src="../app/plugins/jquery/jquery.min.js"></script>
+                        <script src="../app/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+                        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+                        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-</div>
-</div>
-</section>
-</div>
+                        <script>
+                        // ================= CONFIG =================
+                        const TIME_SLOTS = ["09:00","11:00","13:00","15:00","17:00"];
+                        const SLOT_CAPACITY = 2;
+                        let savedAddresses = <?php echo $addresses_json; ?>;
+                        let nextAddrId = Math.max(...savedAddresses.map(a => a.id),0)+1;
+                        let items = [];
 
-<?php include("../footer/userfooter.php"); ?>
-</div>
+                        // DATE PICKER
+                        const today = new Date(); today.setHours(0,0,0,0);
+                        const minDate = new Date(today); minDate.setDate(today.getDate()+2);
+                        const maxDate = new Date(today); maxDate.setFullYear(today.getFullYear()+1);
 
-<!-- Add/Edit Address Modal -->
-<div class="modal fade" id="addressModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">Add New Address</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label>Address Label (e.g., Home, Office)</label>
-                    <input type="text" id="addressLabel" class="form-control" placeholder="Home">
-                </div>
-                <div class="mb-3">
-                    <label>Full Address</label>
-                    <textarea id="addressText" class="form-control" rows="3" placeholder="Street, City, Postcode, State"></textarea>
-                </div>
-                <div class="form-check">
-                    <input type="checkbox" id="addressDefault" class="form-check-input">
-                    <label class="form-check-label">Set as default pickup address</label>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="saveAddressBtn">Save Address</button>
-            </div>
-        </div>
-    </div>
-</div>
+                        flatpickr("#pickupDate", {
+                            minDate:minDate, maxDate:maxDate, dateFormat:"Y-m-d",
+                            disable:[d => d.getDay()===0||d.getDay()===6]
+                        });
 
+                        // ITEMS LOGIC
+                        function updateItemSubtotal(){
+                            let rate=parseFloat($('#categorySelect option:selected').data('rate')||0);
+                            let qty=parseFloat($('#itemQty').val()||0);
+                            $('#itemSubtotal').val((rate*qty).toFixed(2));
+                        }
+                        function renderItemsTable(){
+                            const $body=$('#itemsBody'); $body.empty(); let total=0;
+                            items.forEach((it,idx)=>{
+                                total+=parseFloat(it.subtotal);
+                                $body.append(`<tr>
+                                    <td>${idx+1}</td>
+                                    <td>${it.category}</td>
+                                    <td>${it.quantity}</td>
+                                    <td>${it.subtotal}</td>
+                                    <td><button class="btn btn-sm btn-danger removeItemBtn" data-idx="${idx}"><i class="fas fa-trash"></i></button></td>
+                                </tr>`);
+                            });
+                            $('#totalPrice').text(total.toFixed(2));
+                        }
+                        $('#categorySelect,#itemQty').on('change input',updateItemSubtotal);
+                        $('#addItemBtn').on('click',()=>{
+                            let category=$('#categorySelect').val(), qty=parseFloat($('#itemQty').val()), subtotal=parseFloat($('#itemSubtotal').val());
+                            if(!category||!qty||qty<=0){ alert('Please select category and quantity'); return; }
+                            items.push({category,quantity:qty,subtotal});
+                            renderItemsTable();
+                            $('#categorySelect').val(''); $('#itemQty').val(''); $('#itemSubtotal').val('0.00');
+                        });
+                        $(document).on('click','.removeItemBtn',function(){ items.splice($(this).data('idx'),1); renderItemsTable(); });
 
+                        // ADDRESSES
+                        function renderAddressDropdown(){
+                            const $sel=$("#pickupAddress"); $sel.empty();
+                            $sel.append('<option value="" disabled selected>-- Select Pickup Address --</option>');
+                            savedAddresses.forEach(a=>$sel.append(`<option value="${a.id}">${a.label} — ${a.address}</option>`));
+                        }
+                        renderAddressDropdown();
 
-<script src="../app/plugins/jquery/jquery.min.js"></script>
-<script src="../app/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="../app/dist/js/adminlte.min.js"></script>
+                        // TIME SLOTS UPDATE
+                        $('#pickupDate').on('change', function(){
+                            const date = $(this).val();
+                            const booked = JSON.parse(localStorage.getItem("pickupRequests")||"[]").filter(r=>r.date===date);
+                            const $sel = $('#pickupTime'); $sel.empty();
+                            $sel.append('<option value="" disabled selected>-- Select Time --</option>');
+                            TIME_SLOTS.forEach(t=>{
+                                const count = booked.filter(r=>r.time===t).length;
+                                $sel.append(`<option value="${t}" ${count>=SLOT_CAPACITY?"disabled":""}>${t}</option>`);
+                            });
+                        });
 
-<input type="date" id="pickupDate">
-<script>
-// ================= CONFIG =================
-const TIME_SLOTS = ["09:00","11:00","13:00","15:00","17:00"];
-const SLOT_CAPACITY = 2;
-let savedAddresses = <?php echo $addresses_json; ?>;
-let nextAddrId = Math.max(...savedAddresses.map(a => a.id), 0) + 1;
-let editingId = null;
-let items = [];
-
-// ================= DATE RULES =================
-// today at 00:00
-const today = new Date();
-today.setHours(0,0,0,0);
-
-// minimum pickup date = today + 2 days
-const minDate = new Date(today);
-minDate.setDate(today.getDate() + 2);
-
-// maximum date (optional, e.g., 1 year from today)
-const maxDate = new Date(today);
-maxDate.setFullYear(maxDate.getFullYear() + 1);
-
-// pickup date input
-const pickupDateInput = document.getElementById("pickupDate");
-
-// ================= FLATPICKR DATE PICKER =================
-flatpickr("#pickupDate", {
-    minDate: minDate,
-    maxDate: maxDate,
-    dateFormat: "Y-m-d",
-    disable: [
-        function(date) {
-            // disable weekends (0 = Sunday, 6 = Saturday)
-            return (date.getDay() === 0 || date.getDay() === 6);
-        }
-    ],
-    placeholder: "Please select your pickup date",
-    onChange: function(selectedDates, dateStr) {
-        if (!dateStr) return;
-        updateAvailableTimes(dateStr);
-    }
-});
-
-// ================= TIME SLOT LOGIC =================
-function getAllBooked() {
-    return JSON.parse(localStorage.getItem("pickupRequests") || "[]");
-}
-
-function updateAvailableTimes(date) {
-    const booked = getAllBooked().filter(r => r.date === date);
-    const timeSelect = $("#pickupTime");
-    timeSelect.html('<option value="" disabled selected>-- Select Time --</option>');
-
-    TIME_SLOTS.forEach(time => {
-        const count = booked.filter(r => r.time === time).length;
-        const disabled = count >= SLOT_CAPACITY ? "disabled" : "";
-        timeSelect.append(`<option value="${time}" ${disabled}>${time}</option>`);
-    });
-}
-
-
-
-
-
-
-
-
-
-// --- ITEMS ---
-function updateItemSubtotal(){
-    let rate = parseFloat($('#categorySelect option:selected').data('rate')||0);
-    let qty = parseFloat($('#itemQty').val()||0);
-    $('#itemSubtotal').val((rate*qty).toFixed(2));
-}
-function renderItemsTable(){
-    const $body = $('#itemsBody'); $body.empty(); let total=0;
-    items.forEach((it,idx)=>{
-        total+=parseFloat(it.subtotal);
-        $body.append(`<tr><td>${idx+1}</td><td>${it.category}</td><td>${it.quantity}</td><td>${it.subtotal}</td><td><button class="btn btn-sm btn-danger removeItemBtn" data-idx="${idx}"><i class="fas fa-trash"></i></button></td></tr>`);
-    });
-    $('#totalPrice').text(total.toFixed(2));
-}
-$('#categorySelect,#itemQty').on('change input', updateItemSubtotal);
-$('#addItemBtn').on('click', function(){
-    let category=$('#categorySelect').val(), qty=parseFloat($('#itemQty').val()), subtotal=parseFloat($('#itemSubtotal').val());
-    if(!category||!qty||qty<=0){ alert('Please select category and quantity'); return; }
-    items.push({category,quantity:qty,subtotal});
-    renderItemsTable();
-    $('#categorySelect').val(''); $('#itemQty').val(''); $('#itemSubtotal').val('0.00');
-});
-$(document).on('click','.removeItemBtn',function(){ items.splice($(this).data('idx'),1); renderItemsTable(); });
-
-
-
-// --- ADDRESSES ---
-function renderAddressDropdown(){
-    const $sel=$('#pickupAddress'); $sel.empty(); $sel.append('<option value="" disabled selected>-- Select Pickup Address --</option>');
-    savedAddresses.forEach(a=>$sel.append(`<option value="${a.id}">${a.label} — ${a.address}</option>`));
-    $sel.append('<option value="new">+ Add New Address</option>');
-}
-$('#pickupAddress').on('change', function(){
-    if($(this).val()==='new'){
-        editingId=null; $('#modalTitle').text('Add New Address');
-        $('#addressLabel').val(''); $('#addressText').val(''); $('#addressDefault').prop('checked',false);
-        $('#addressModal').modal('show');
-    }
-});
-$('#saveAddressBtn').on('click', function(){
-    const label=$('#addressLabel').val().trim(), address=$('#addressText').val().trim(), isDefault=$('#addressDefault').prop('checked');
-    if(!label||!address){ alert('Please fill label & address'); return; }
-    if(isDefault) savedAddresses.forEach(a=>a.is_default=false);
-    if(editingId){
-        let addr=savedAddresses.find(a=>a.id===editingId);
-        addr.label=label; addr.address=address; addr.is_default=isDefault;
-    } else {
-        let newAddr={id:nextAddrId++, label, address, is_default:isDefault};
-        savedAddresses.push(newAddr);
-    }
-    $('#addressModal').modal('hide'); renderAddressDropdown();
-    $('#pickupAddress').val(savedAddresses[savedAddresses.length-1].id);
-});
-
-
-
-
-$('#pickupForm').on('submit', function(e){
-    e.preventDefault();
-
-    if(items.length === 0){
-        Swal.fire('No Items Added', 'Please add at least one recyclable item.', 'warning');
-        return;
-    }
-
-    let addressId = $('#pickupAddress').val();
-    if(!addressId || addressId === 'new'){
-        Swal.fire('Address Required', 'Please select a pickup address.', 'warning');
-        return;
-    }
-
-    let addrObj = savedAddresses.find(a => a.id == addressId);
-
-    const payload = {
-        items,
-        address_id: addrObj.id,
-        address_label: addrObj.label,
-        address: addrObj.address,
-        date: $('#pickupDate').val(),
-        time: $('#pickupTime').val(),
-        remarks: $('#remarks').val(),
-        totalPrice: parseFloat($('#totalPrice').text()),
-        status: "Pending"
-    };
-
-    Swal.fire({
-        title: 'Confirm Submission',
-        text: 'Are you sure you want to submit this pickup request?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, submit',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
-        if(result.isConfirmed){
-            submitPickupRequest(payload);
-        }
-    });
-});
-
-
-
-
-function submitPickupRequest(payload){
-    $.post('pickup_form.php', {action:'save_request', ...payload}, function(res){
-        if(res.ok){
-
-            // store for slot checking
-            let allRequests = JSON.parse(localStorage.getItem('pickupRequests') || '[]');
-            allRequests.push(payload);
-            localStorage.setItem('pickupRequests', JSON.stringify(allRequests));
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Request Submitted',
-                text: 'Your pickup request has been submitted successfully!',
-                timer: 1800,
-                showConfirmButton: false
-            }).then(() => {
-                window.location.href = 'pickups.php';
-            });
-
-        } else {
-            Swal.fire('Error', res.msg || 'Could not save request.', 'error');
-        }
-    }, 'json').fail(() => {
-        Swal.fire('Network Error', 'Please try again later.', 'error');
-    });
-}
-
-
-// INITIAL
-renderAddressDropdown();
-</script>
-
-</body>
-</html>
+                        // FORM SUBMIT
+                        $('#pickupForm').on('submit', function(e){
+                            if(items.length === 0){ Swal.fire('No Items','Add at least one item','warning'); e.preventDefault(); return; }
+                            let addrId = $('#pickupAddress').val();
+                            if(!addrId){ Swal.fire('Address Required','Select a pickup address','warning'); e.preventDefault(); return; }
+                            const addr = savedAddresses.find(a => a.id == addrId);
+                            const payload = {
+                                items,
+                                address_id: addr.id,
+                                address_label: addr.label,
+                                address: addr.address,
+                                date: $('#pickupDate').val(),
+                                time: $('#pickupTime').val(),
+                                remarks: $('#remarks').val(),
+                                totalPrice: parseFloat($('#totalPrice').text()),
+                                status: "Pending"
+                            };
+                            // Save payload in hidden input
+                            $('#pickupForm input[name="pickupData"]').remove();
+                            $('<input>').attr('type','hidden').attr('name','pickupData').val(JSON.stringify(payload)).appendTo('#pickupForm');
+                        });
+                    </script>
+        </body>
+    </html>
